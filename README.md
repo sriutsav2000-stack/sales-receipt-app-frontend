@@ -1,0 +1,1 @@
+# sales-receipt-app-frontend
