@@ -1,56 +1,104 @@
 import React, { useState } from "react";
 import {
-  IonPage, IonHeader, IonTitle, IonContent,
-  IonItem, IonLabel, IonInput, IonButton
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonToast,
+  IonButton,
 } from "@ionic/react";
 import { api } from "../services/api";
-import "../styles/form.css";
 
 const AddProduct: React.FC = () => {
-  const [form, setForm] = useState({ name: "", price: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    price: "",
+  });
 
-  const handleChange = (key: string, value: any) =>
-    setForm({ ...form, [key]: value });
+  const [toast, setToast] = useState({ show: false, message: "" });
 
-  const handleSubmit = async () => {
+  const handleChange = (e: any) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
     try {
-      await api.addProduct({ ...form, price: parseFloat(form.price) });
-      alert("Product added successfully!");
-      setForm({ name: "", price: "" });
+      await api.addProduct({
+        name: formData.name,
+        price: Number(formData.price),
+      });
+
+      setToast({ show: true, message: "Product added successfully" });
+      setFormData({ name: "", price: "" });
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      alert("Error adding product: " + message);
+      console.error(err);
+      setToast({ show: true, message: "Failed to add product" });
     }
   };
 
   return (
     <IonPage>
       <IonHeader>
-        <IonTitle>Add Product</IonTitle>
+        <IonToolbar>
+          <IonTitle>Add Product</IonTitle>
+        </IonToolbar>
       </IonHeader>
+
       <IonContent className="ion-padding">
-        <IonItem>
-          <IonLabel position="stacked">Product Name</IonLabel>
-          <IonInput
-            value={form.name}
-            placeholder="Enter product name"
-            onIonChange={(e) => handleChange("name", e.detail.value!)}
-          />
-        </IonItem>
+        <div className="container mt-4">
+          <div className="card shadow-sm p-4 mx-auto" style={{ maxWidth: "500px" }}>
+            <h4 className="mb-3 text-center text-primary">Add New Product</h4>
 
-        <IonItem>
-          <IonLabel position="stacked">Price</IonLabel>
-          <IonInput
-            type="number"
-            value={form.price}
-            placeholder="Enter price"
-            onIonChange={(e) => handleChange("price", e.detail.value!)}
-          />
-        </IonItem>
+            <form onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <label className="form-label">Product Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  className="form-control"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-        <IonButton expand="block" className="submit-btn" onClick={handleSubmit}>
-          Save Product
-        </IonButton>
+              <div className="mb-3">
+                <label className="form-label">Price</label>
+                <input
+                  type="number"
+                  name="price"
+                  className="form-control"
+                  value={formData.price}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <IonButton expand="block" type="submit" color="primary">
+                Add Product
+              </IonButton>
+
+              <IonButton
+                expand="block"
+                fill="clear"
+                routerLink="/add-receipt"
+                className="mt-2"
+              >
+                Back
+              </IonButton>
+            </form>
+          </div>
+        </div>
+
+        <IonToast
+          isOpen={toast.show}
+          message={toast.message}
+          duration={2000}
+          onDidDismiss={() => setToast({ ...toast, show: false })}
+        />
       </IonContent>
     </IonPage>
   );

@@ -1,0 +1,20 @@
+/* Allow typing and clicking inside any input even inside Bootstrap card */
+.card, .container, .row, .col-7, .col-3, .col-2 {
+  pointer-events: auto !important;
+}
+
+/* Fix dropdown click not selecting */
+.dropdown-item {
+  pointer-events: auto !important;
+}
+
+/* Fix Ionic gesture layer swallowing input typing */
+ion-content {
+  --overflow: visible !important;
+}
+
+ion-content * {
+  touch-action: auto !important;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+}
