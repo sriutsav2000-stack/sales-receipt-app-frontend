@@ -48,7 +48,7 @@ export const api = {
   getReceipts: () => request("receipts/"),
 
   addReceipt: (data: ReceiptPayload) =>
-    request("receipts/", {
+    request("receipts/with-items/", {
       method: "POST",
       body: JSON.stringify(data),
     }),

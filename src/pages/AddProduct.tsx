@@ -1,3 +1,4 @@
+// AddProduct.tsx - Updated with new styling
 import React, { useState } from "react";
 import {
   IonPage,
@@ -48,29 +49,29 @@ const AddProduct: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding">
-        <div className="container mt-4">
-          <div className="card shadow-sm p-4 mx-auto" style={{ maxWidth: "500px" }}>
-            <h4 className="mb-3 text-center text-primary">Add New Product</h4>
+        <div className="form-container fade-in">
+          <div className="form-card hover-lift">
+            <h4 className="form-title">Add New Product</h4>
 
             <form onSubmit={handleSubmit}>
-              <div className="mb-3">
+              <div className="form-group">
                 <label className="form-label">Product Name</label>
                 <input
                   type="text"
                   name="name"
-                  className="form-control"
+                  className="form-input"
                   value={formData.name}
                   onChange={handleChange}
                   required
                 />
               </div>
 
-              <div className="mb-3">
+              <div className="form-group">
                 <label className="form-label">Price</label>
                 <input
                   type="number"
                   name="price"
-                  className="form-control"
+                  className="form-input"
                   value={formData.price}
                   onChange={handleChange}
                   required

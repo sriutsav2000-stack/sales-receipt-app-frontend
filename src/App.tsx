@@ -5,6 +5,7 @@ import Receipts from "./pages/Receipts";
 import AddReceipt from "./pages/AddReceipt";
 import AddCustomer from "./pages/AddCustomer";
 import AddProduct from "./pages/AddProduct";
+import './styles/main.css';
 
 const App: React.FC = () => (
   <IonApp>

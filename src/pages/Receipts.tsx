@@ -1,3 +1,4 @@
+// Receipts.tsx - Updated with enhanced header
 import React, { useEffect, useState } from "react";
 import {
   IonPage,
@@ -45,40 +46,67 @@ const Receipts: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding">
-
-        {/* Add Button */}
-        <div className="d-flex justify-content-end mb-3">
-          <IonButton routerLink="/add-receipt" color="primary">
-            + Add New Receipt
+        {/* Enhanced Header */}
+        <div className="page-header">
+          <h1 className="page-title">All Receipts</h1>
+          <IonButton 
+            routerLink="/add-receipt" 
+            color="primary" 
+            className="custom-button"
+            style={{ 
+              '--background': 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+              '--background-hover': 'linear-gradient(135deg, var(--primary-dark), var(--primary))'
+            } as any}
+          >
+            ＋ Add New Receipt
           </IonButton>
         </div>
 
         {/* Loading */}
         {loading && (
-          <div className="text-center mt-4">
-            <IonSpinner name="crescent" />
-            <p>Loading receipts...</p>
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p className="text-muted">Loading receipts...</p>
           </div>
         )}
 
         {/* Error */}
-        {error && <p className="text-danger text-center">{error}</p>}
+        {error && (
+          <div className="empty-state">
+            <div className="empty-state-icon">⚠️</div>
+            <p className="text-danger">{error}</p>
+          </div>
+        )}
 
         {/* No Data */}
         {!loading && !error && receipts.length === 0 && (
-          <p className="text-center">No receipts found.</p>
+          <div className="empty-state">
+            <div className="empty-state-icon">📄</div>
+            <p className="text-muted">No receipts found.</p>
+            <IonButton 
+              routerLink="/add-receipt" 
+              color="primary" 
+              className="mt-3 custom-button"
+              style={{ 
+                '--background': 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+                '--background-hover': 'linear-gradient(135deg, var(--primary-dark), var(--primary))'
+              } as any}
+            >
+              Create Your First Receipt
+            </IonButton>
+          </div>
         )}
 
         {/* Receipts Table */}
         {!loading && receipts.length > 0 && (
-          <div className="card shadow-sm">
-            <div className="card-header bg-primary text-white">
-              <h5 className="mb-0">All Receipts</h5>
+          <div className="card hover-lift">
+            <div className="card-header">
+              <h5 className="mb-0">Receipts List</h5>
             </div>
 
             <div className="card-body p-0">
-              <table className="table table-striped table-hover mb-0">
-                <thead className="table-light">
+              <table className="table">
+                <thead>
                   <tr>
                     <th style={{ width: "120px" }}>ID</th>
                     <th>Date</th>
@@ -87,10 +115,10 @@ const Receipts: React.FC = () => {
                 </thead>
                 <tbody>
                   {receipts.map((receipt) => (
-                    <tr key={receipt.id}>
-                      <td>{receipt.id}</td>
+                    <tr key={receipt.id} className="slide-in">
+                      <td className="font-semibold">#{receipt.id}</td>
                       <td>{receipt.date}</td>
-                      <td>₹{receipt.total_due}</td>
+                      <td className="font-bold text-primary">₹{receipt.total_due}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,3 +1,4 @@
+// AddCustomer.tsx - Updated with new styling
 import React, { useState } from "react";
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonToast, IonButton } from "@ionic/react";
 import { api } from "../services/api";
@@ -21,7 +22,7 @@ const AddCustomer: React.FC = () => {
     try {
       const payload = {
         name: formData.name,
-        contact: formData.contact,   // MUST MATCH BACKEND
+        contact: formData.contact,
       };
 
       await api.addCustomer(payload);
@@ -46,29 +47,29 @@ const AddCustomer: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding">
-        <div className="container mt-4">
-          <div className="card p-4 shadow-sm" style={{ maxWidth: "500px", margin: "0 auto" }}>
-            <h4 className="text-center text-primary mb-3">Create Customer</h4>
+        <div className="form-container fade-in">
+          <div className="form-card hover-lift">
+            <h4 className="form-title">Create Customer</h4>
 
             <form onSubmit={handleSubmit}>
-              <div className="mb-3">
+              <div className="form-group">
                 <label className="form-label">Customer Name</label>
                 <input
                   type="text"
                   name="name"
-                  className="form-control"
+                  className="form-input"
                   value={formData.name}
                   onChange={handleChange}
                   required
                 />
               </div>
 
-              <div className="mb-3">
+              <div className="form-group">
                 <label className="form-label">Contact (Optional)</label>
                 <input
                   type="text"
                   name="contact"
-                  className="form-control"
+                  className="form-input"
                   value={formData.contact}
                   onChange={handleChange}
                 />
