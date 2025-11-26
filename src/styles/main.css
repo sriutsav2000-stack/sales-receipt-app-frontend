@@ -17,7 +17,7 @@
 @import './animations.css';
 @import './components.css';
 @import './layout.css';
-
+@import './dashboard.css';
 /* Global Styles */
 * {
   box-sizing: border-box;

@@ -33,6 +33,19 @@ export interface ReceiptPayload {
   items: ReceiptItemPayload[];
 }
 
+export interface TopCustomer {
+  customer_id: number;
+  name: string;
+  total_due: number;
+}
+
+export interface DashboardStats {
+  total_receipts: number;
+  total_revenue: number;
+  pending_amount: number;
+  completed_receipts: number;
+}
+
 export const api = {
   // Customers
   getCustomers: () => request("customers/"),
@@ -46,6 +59,9 @@ export const api = {
 
   // Receipts
   getReceipts: () => request("receipts/"),
+  getTopReceipts: () => request("dashboard/top-receipts/"),
+  getTopCustomers: () => request("dashboard/top-customers/"),
+  getDashboardStats: () => request("dashboard/stats/"),
 
   addReceipt: (data: ReceiptPayload) =>
     request("receipts/with-items/", {
