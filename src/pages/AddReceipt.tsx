@@ -1,4 +1,4 @@
-// AddReceipt.tsx - Fixed immediate state update for product selection
+// AddReceipt.tsx - Elegant Redesign with Bootstrap
 import React, { useEffect, useState, useRef } from "react";
 import {
   IonPage,
@@ -9,8 +9,12 @@ import {
   IonToast,
   IonButton,
   useIonRouter,
+  IonIcon,
 } from "@ionic/react";
+import { add, arrowBack, receipt, close, search, chevronDown } from "ionicons/icons";
 import { api } from "../services/api";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRupeeSign, faCalendarAlt, faUser, faBox,faSearch,faArrowLeft, faShoppingCart, faDollarSign, faReceipt, faPlus, faTrash, faUndo, faCheckCircle, faClock } from '@fortawesome/free-solid-svg-icons';
 
 interface Customer {
   id: number;
@@ -28,7 +32,8 @@ interface ProductRow {
   product_id: number | null;
   product_name: string;
   quantity: number | null;
-  price: number | null;
+  original_price: number | null;
+  current_price: number | null;
   show: boolean;
 }
 
@@ -42,14 +47,22 @@ const AddReceipt: React.FC = () => {
 
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(
-    null
-  );
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
 
-  const [productRows, setProductRows] = useState<ProductRow[]>([]);
+  const [productRows, setProductRows] = useState<ProductRow[]>([
+    {
+      product_id: null,
+      product_name: "",
+      quantity: null,
+      original_price: null,
+      current_price: null,
+      show: false,
+    },
+  ]);
+
   const [formData, setFormData] = useState({
-    date: "",
-    due_date: "",
+    date: new Date().toISOString().split('T')[0],
+    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     status: "Open",
     amount: "",
     advance_received: "",
@@ -66,8 +79,8 @@ const AddReceipt: React.FC = () => {
 
       setFormData(
         d.formData || {
-          date: "",
-          due_date: "",
+          date: new Date().toISOString().split('T')[0],
+          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           status: "Open",
           amount: "",
           advance_received: "",
@@ -82,7 +95,8 @@ const AddReceipt: React.FC = () => {
           product_id: row.product_id ?? null,
           product_name: row.product_name ?? "",
           quantity: row.quantity ?? null,
-          price: row.price ?? null,
+          original_price: row.original_price ?? row.price ?? null,
+          current_price: row.current_price ?? row.price ?? null,
           show: false,
         }))
       );
@@ -113,7 +127,6 @@ const AddReceipt: React.FC = () => {
 
         setCustomers(cust);
         setProducts(prod);
-        console.log("Loaded products:", prod);
       } catch (err) {
         setToastMessage("Failed to load customer/product list.");
         setShowToast(true);
@@ -131,7 +144,8 @@ const AddReceipt: React.FC = () => {
         product_id: null,
         product_name: "",
         quantity: null,
-        price: null,
+        original_price: null,
+        current_price: null,
         show: false,
       },
     ]);
@@ -144,8 +158,12 @@ const AddReceipt: React.FC = () => {
   ) => {
     const updated = [...productRows];
     updated[index] = { ...updated[index], [field]: value };
+    
+    if (field === 'current_price' || field === 'quantity') {
+      recalc(updated);
+    }
+    
     setProductRows(updated);
-    recalc(updated);
   };
 
   const deleteProductRow = (index: number) => {
@@ -157,16 +175,24 @@ const AddReceipt: React.FC = () => {
   const recalc = (rows: ProductRow[]) => {
     let total = 0;
     rows.forEach((r) => {
-      if (r.price && r.quantity) total += r.price * r.quantity;
+      if (r.current_price && r.quantity) total += r.current_price * r.quantity;
     });
     setFormData((prev) => ({ ...prev, amount: String(total || "") }));
+  };
+
+  const resetPrice = (index: number) => {
+    const updated = [...productRows];
+    if (updated[index].original_price) {
+      updated[index].current_price = updated[index].original_price;
+      recalc(updated);
+    }
+    setProductRows(updated);
   };
 
   const filteredCustomers = customers.filter((c) =>
     c.name.toLowerCase().includes(customerSearch.toLowerCase())
   );
 
-  // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -176,10 +202,8 @@ const AddReceipt: React.FC = () => {
         .map((r) => ({
           product_id: r.product_id!,
           quantity: r.quantity!,
-          price: r.price!,
+          price: r.current_price!,
         }));
-
-      console.log("Submitting receipt with items:", items);
 
       await api.addReceipt({
         date: formData.date,
@@ -191,26 +215,30 @@ const AddReceipt: React.FC = () => {
         items,
       });
 
-      // Clear saved form
       sessionStorage.removeItem(STORAGE_KEY);
 
-      // Reset fields
       setFormData({
-        date: "",
-        due_date: "",
+        date: new Date().toISOString().split('T')[0],
+        due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         status: "Open",
         amount: "",
         advance_received: "",
       });
       setCustomerSearch("");
       setSelectedCustomerId(null);
-      setProductRows([]);
+      setProductRows([{
+        product_id: null,
+        product_name: "",
+        quantity: null,
+        original_price: null,
+        current_price: null,
+        show: false,
+      }]);
 
-      setToastMessage("Receipt added successfully!");
+      setToastMessage("🎉 Receipt added successfully!");
       setShowToast(true);
     } catch (err) {
-      console.error("Error adding receipt:", err);
-      setToastMessage("Failed to add receipt.");
+      setToastMessage("❌ Failed to add receipt.");
       setShowToast(true);
     }
   };
@@ -218,38 +246,31 @@ const AddReceipt: React.FC = () => {
   const goToAddCustomer = () => router.push("/add-customer");
   const goToAddProduct = () => router.push("/add-product");
 
-  // FIXED: Direct product selection handler
   const handleProductSelect = (index: number, product: Product) => {
-    console.log("Selecting product:", product, "for row:", index);
-    
-    // Create a new array with the updated row
     const updatedRows = productRows.map((row, i) => {
       if (i === index) {
         return {
           ...row,
           product_id: product.id,
           product_name: product.name,
-          price: product.price,
+          original_price: product.price,
+          current_price: product.price,
           show: false
         };
       }
       return row;
     });
     
-    console.log("Updated rows:", updatedRows);
     setProductRows(updatedRows);
     recalc(updatedRows);
   };
 
-  // Handle click outside dropdowns
   useEffect(() => {
     const handleClickOutside = () => {
-      // Close customer dropdown
       if (showCustomerDropdown) {
         setShowCustomerDropdown(false);
       }
 
-      // Close all product dropdowns
       const updatedRows = productRows.map(row => ({
         ...row,
         show: false
@@ -263,14 +284,12 @@ const AddReceipt: React.FC = () => {
     };
   }, [showCustomerDropdown, productRows]);
 
-  // Stop propagation for dropdown clicks
   const handleDropdownClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
   const handleProductInputClick = (e: React.MouseEvent, index: number) => {
     e.stopPropagation();
-    // Close all other dropdowns and open this one
     const updatedRows = productRows.map((row, i) => ({
       ...row,
       show: i === index ? true : false
@@ -280,296 +299,495 @@ const AddReceipt: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="glass-effect">
         <IonToolbar>
-          <IonTitle>Add Receipt</IonTitle>
+          <div className="container-fluid">
+            <div className="d-flex align-items-center justify-content-between">
+              <button 
+                className="btn btn-link text-dark p-0" 
+                onClick={() => router.goBack()}
+                style={{ fontSize: '1.5rem' }}
+              >
+                <FontAwesomeIcon icon={faArrowLeft} />
+              </button>
+              <IonTitle className="text-center gradient-text">
+                <FontAwesomeIcon icon={faReceipt} className="me-2" />
+                New Receipt
+              </IonTitle>
+              <div style={{ width: '40px' }}></div>
+            </div>
+          </div>
         </IonToolbar>
       </IonHeader>
 
       <IonContent className="ion-padding">
-        <div className="form-container fade-in">
-          <div className="form-card hover-lift">
-            <h4 className="form-title">Create New Receipt</h4>
+        <div className="container-fluid fade-in-up">
+          <div className="row justify-content-center">
+            <div className="col-12 col-lg-10 col-xl-8">
+              <div className="elegant-card p-4 p-md-5 mb-4">
+                <div className="d-flex align-items-center mb-4 pb-3 border-bottom">
+                  <div className="bg-primary bg-gradient p-3 rounded-circle me-3">
+                    <FontAwesomeIcon icon={faReceipt} className="text-white" size="lg" />
+                  </div>
+                  <div>
+                    <h1 className="h3 fw-bold mb-1 gradient-text">Create New Receipt</h1>
+                    <p className="text-muted mb-0">Fill in the details to generate a receipt</p>
+                  </div>
+                </div>
 
-            <form onSubmit={handleSubmit}>
-              {/* Date */}
-              <div className="form-group">
-                <label className="form-label">Date</label>
-                <input
-                  type="date"
-                  className="form-input"
-                  value={formData.date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, date: e.target.value })
-                  }
-                  required
-                />
-              </div>
-
-              {/* Due Date */}
-              <div className="form-group">
-                <label className="form-label">Due Date</label>
-                <input
-                  type="date"
-                  className="form-input"
-                  value={formData.due_date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, due_date: e.target.value })
-                  }
-                  required
-                />
-              </div>
-
-              {/* Customer Search */}
-              <div className="form-group dropdown-container">
-                <label className="form-label">Customer</label>
-                <input
-                  className="form-input"
-                  placeholder="Search customer..."
-                  value={customerSearch}
-                  onFocus={() => setShowCustomerDropdown(true)}
-                  onChange={(e) => {
-                    setCustomerSearch(e.target.value);
-                    setShowCustomerDropdown(true);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                />
-
-                {showCustomerDropdown && customerSearch.trim() !== "" && (
-                  <div className="dropdown-menu" onClick={handleDropdownClick}>
-                    {filteredCustomers.length ? (
-                      filteredCustomers.map((cust) => (
-                        <div
-                          key={cust.id}
-                          className="dropdown-item"
-                          onClick={() => {
-                            setCustomerSearch(cust.name);
-                            setSelectedCustomerId(cust.id);
-                            setShowCustomerDropdown(false);
-                          }}
-                        >
-                          {cust.name}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="dropdown-item text-muted">No results found</div>
-                    )}
-
-                    <div
-                      className="dropdown-item add-new"
-                      onClick={goToAddCustomer}
-                    >
-                      ➕ Add New Customer
+                <form onSubmit={handleSubmit}>
+                  {/* Dates Section */}
+                  <div className="row mb-4">
+                    <div className="col-12 col-md-6 mb-3 mb-md-0">
+                      <label className="form-label fw-semibold mb-2">
+                        <FontAwesomeIcon icon={faCalendarAlt} className="me-2" />
+                        Issue Date
+                      </label>
+                      <div className="input-group">
+                        <input
+                          type="date"
+                          className="form-control form-control-lg"
+                          value={formData.date}
+                          onChange={(e) =>
+                            setFormData({ ...formData, date: e.target.value })
+                          }
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label fw-semibold mb-2">
+                        <FontAwesomeIcon icon={faClock} className="me-2" />
+                        Due Date
+                      </label>
+                      <div className="input-group">
+                        <input
+                          type="date"
+                          className="form-control form-control-lg"
+                          value={formData.due_date}
+                          onChange={(e) =>
+                            setFormData({ ...formData, due_date: e.target.value })
+                          }
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Product Rows - COMPLETELY FIXED */}
-              <div className="form-group">
-                <label className="form-label">Products</label>
+                  {/* Customer Search */}
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold mb-2">
+                      <FontAwesomeIcon icon={faUser} className="me-2" />
+                      Customer
+                    </label>
+                    <div className="position-relative">
+                      <div className="input-group">
+                        <span className="input-group-text bg-light border-end-0">
+                          <FontAwesomeIcon icon={faSearch} />
+                        </span>
+                        <input
+                          className="form-control border-start-0"
+                          placeholder="Search customer by name..."
+                          value={customerSearch}
+                          onFocus={() => setShowCustomerDropdown(true)}
+                          onChange={(e) => {
+                            setCustomerSearch(e.target.value);
+                            setShowCustomerDropdown(true);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <button 
+                          className="btn btn-outline-secondary" 
+                          type="button"
+                          onClick={goToAddCustomer}
+                        >
+                          <FontAwesomeIcon icon={faPlus} />
+                        </button>
+                      </div>
 
-                {productRows.map((row, index) => (
-                  <div key={index} className="product-row slide-in">
-                    <div className="product-search dropdown-container">
-                      <input
-                        className="form-input"
-                        placeholder="Search product..."
-                        value={row.product_name}
-                        onFocus={() => {
-                          console.log("Focus on product input, row:", index, "Current value:", row.product_name);
-                          // Close all other dropdowns and open this one
-                          const updatedRows = productRows.map((r, i) => ({
-                            ...r,
-                            show: i === index ? true : false
-                          }));
-                          setProductRows(updatedRows);
-                        }}
-                        onChange={(e) => {
-                          console.log("Product search change:", e.target.value);
-                          // Update only the product_name and keep dropdown open
-                          const updatedRows = productRows.map((r, i) => ({
-                            ...r,
-                            product_name: i === index ? e.target.value : r.product_name,
-                            show: i === index ? true : false
-                          }));
-                          setProductRows(updatedRows);
-                        }}
-                        onClick={(e) => handleProductInputClick(e, index)}
-                      />
-
-                      {row.show && (
-                        <div className="dropdown-menu" onClick={handleDropdownClick}>
-                          {products
-                            .filter((p) =>
-                              p.name.toLowerCase().includes(row.product_name.toLowerCase())
-                            )
-                            .map((prod) => (
-                              <div
-                                key={prod.id}
-                                className="dropdown-item"
+                      {showCustomerDropdown && customerSearch.trim() !== "" && (
+                        <div className="dropdown-menu show w-100 mt-1 shadow" onClick={handleDropdownClick}>
+                          {filteredCustomers.length ? (
+                            filteredCustomers.map((cust) => (
+                              <button
+                                key={cust.id}
+                                type="button"
+                                className="dropdown-item d-flex justify-content-between align-items-center py-3"
                                 onClick={() => {
-                                  console.log("Product clicked:", prod.name);
-                                  handleProductSelect(index, prod);
+                                  setCustomerSearch(cust.name);
+                                  setSelectedCustomerId(cust.id);
+                                  setShowCustomerDropdown(false);
                                 }}
                               >
-                                {prod.name} — ₹{prod.price}
-                              </div>
-                            ))}
-
-                          {products.filter(p => 
-                            p.name.toLowerCase().includes(row.product_name.toLowerCase())
-                          ).length === 0 && (
-                            <div className="dropdown-item text-muted">No products found</div>
+                                <span>{cust.name}</span>
+                                <small className="text-muted">{cust.contact || 'No contact'}</small>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="dropdown-item text-muted py-3 text-center">
+                              No results found
+                            </div>
                           )}
-
-                          <div
-                            className="dropdown-item add-new"
-                            onClick={goToAddProduct}
-                          >
-                            ➕ Add New Product
-                          </div>
                         </div>
                       )}
                     </div>
+                    {selectedCustomerId && (
+                      <div className="mt-2">
+                        <span className="badge bg-primary bg-gradient">
+                          Selected: {customers.find(c => c.id === selectedCustomerId)?.name}
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
-                    {/* Qty */}
-                    <div className="product-quantity">
-                      <input
-                        type="number"
-                        className="form-input"
-                        placeholder="Qty"
-                        value={row.quantity ?? ""}
-                        onChange={(e) => {
-                          const value = e.target.value === "" ? null : Number(e.target.value);
-                          const updatedRows = productRows.map((r, i) => ({
-                            ...r,
-                            quantity: i === index ? value : r.quantity
-                          }));
-                          setProductRows(updatedRows);
-                          recalc(updatedRows);
-                        }}
-                        min="1"
-                        onClick={(e) => e.stopPropagation()}
-                      />
+                  {/* Products Section */}
+                  <div className="mb-4">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <label className="form-label fw-semibold mb-0">
+                        <FontAwesomeIcon icon={faShoppingCart} className="me-2" />
+                        Products
+                      </label>
+                      <span className="badge bg-secondary bg-gradient">
+                        {productRows.length} item{productRows.length !== 1 ? 's' : ''}
+                      </span>
                     </div>
 
-                    {/* Delete */}
-                    <button
+                    {productRows.map((row, index) => (
+                      <div key={index} className="product-row elegant-card p-3 mb-3 position-relative">
+                        <div className="row g-3">
+                          {/* Product Search */}
+                          <div className="col-12 col-md-5 position-relative">
+                            <label className="form-label small fw-semibold text-uppercase text-muted">
+                              Product
+                            </label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-light">
+                                <FontAwesomeIcon icon={faBox} />
+                              </span>
+                              <input
+                                className="form-control"
+                                placeholder="Search product..."
+                                value={row.product_name}
+                                onFocus={() => {
+                                  const updatedRows = productRows.map((r, i) => ({
+                                    ...r,
+                                    show: i === index ? true : false
+                                  }));
+                                  setProductRows(updatedRows);
+                                }}
+                                onChange={(e) => {
+                                  const updatedRows = productRows.map((r, i) => ({
+                                    ...r,
+                                    product_name: i === index ? e.target.value : r.product_name,
+                                    show: i === index ? true : false
+                                  }));
+                                  setProductRows(updatedRows);
+                                }}
+                                onClick={(e) => handleProductInputClick(e, index)}
+                              />
+                            </div>
+
+                            {row.show && (
+                              <div className="dropdown-menu show w-100 mt-1 shadow" onClick={handleDropdownClick}>
+                                {products
+                                  .filter((p) =>
+                                    p.name.toLowerCase().includes(row.product_name.toLowerCase())
+                                  )
+                                  .map((prod) => (
+                                    <button
+                                      key={prod.id}
+                                      type="button"
+                                      className="dropdown-item d-flex justify-content-between align-items-center py-2"
+                                      onClick={() => handleProductSelect(index, prod)}
+                                    >
+                                      <span>{prod.name}</span>
+                                      <small className="text-muted">₹{prod.price}</small>
+                                    </button>
+                                  ))}
+
+                                {products.filter(p => 
+                                  p.name.toLowerCase().includes(row.product_name.toLowerCase())
+                                ).length === 0 && (
+                                  <div className="dropdown-item text-muted py-2 text-center">
+                                    No products found
+                                  </div>
+                                )}
+
+                                <div className="dropdown-divider"></div>
+                                <button
+                                  type="button"
+                                  className="dropdown-item text-primary py-2"
+                                  onClick={goToAddProduct}
+                                >
+                                  <FontAwesomeIcon icon={faPlus} className="me-2" />
+                                  Add New Product
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Quantity */}
+                          <div className="col-12 col-md-2">
+                            <label className="form-label small fw-semibold text-uppercase text-muted">
+                              Quantity
+                            </label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              placeholder="Qty"
+                              value={row.quantity ?? ""}
+                              onChange={(e) => {
+                                const value = e.target.value === "" ? null : Number(e.target.value);
+                                const updatedRows = productRows.map((r, i) => ({
+                                  ...r,
+                                  quantity: i === index ? value : r.quantity
+                                }));
+                                setProductRows(updatedRows);
+                                recalc(updatedRows);
+                              }}
+                              min="1"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+
+                          {/* Prices */}
+                          <div className="col-12 col-md-4">
+                            <div className="row g-2">
+                              <div className="col-6">
+                                <label className="form-label small fw-semibold text-uppercase text-muted">
+                                  Original
+                                </label>
+                                <div className="form-control bg-light border-0">
+                                  {row.original_price ? `₹${row.original_price}` : '-'}
+                                </div>
+                              </div>
+                              <div className="col-6">
+                                <label className="form-label small fw-semibold text-uppercase text-muted">
+                                  Selling
+                                </label>
+                                <div className="input-group">
+                                  <input
+                                    type="number"
+                                    className="form-control"
+                                    placeholder="Price"
+                                    value={row.current_price ?? ""}
+                                    onChange={(e) => {
+                                      const value = e.target.value === "" ? null : Number(e.target.value);
+                                      updateProductRow(index, 'current_price', value);
+                                    }}
+                                    min="0"
+                                    step="0.01"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  {row.original_price && row.current_price !== row.original_price && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        resetPrice(index);
+                                      }}
+                                      className="btn btn-outline-warning"
+                                      title="Reset to original price"
+                                    >
+                                      <FontAwesomeIcon icon={faUndo} />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Delete */}
+                          <div className="col-12 col-md-1 d-flex align-items-end">
+                            <button
+                              type="button"
+                              className="btn btn-outline-danger w-100"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteProductRow(index);
+                              }}
+                              title="Remove product"
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Subtotal */}
+                        {row.current_price && row.quantity && (
+                          <div className="mt-3 pt-3 border-top">
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div>
+                                <span className="text-muted me-2">Subtotal:</span>
+                                <span className="h5 fw-bold text-primary mb-0">
+                                  ₹{(row.current_price * row.quantity).toFixed(2)}
+                                </span>
+                              </div>
+                              {row.original_price && row.current_price !== row.original_price && (
+                                <span className="badge bg-warning text-dark">
+                                  Modified from ₹{row.original_price}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    <button 
                       type="button"
-                      className="delete-btn"
+                      className="btn btn-outline-primary w-100 mt-2"
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteProductRow(index);
+                        addProductRow();
                       }}
                     >
-                      ✕
+                      <FontAwesomeIcon icon={faPlus} className="me-2" />
+                      Add Another Product
                     </button>
                   </div>
-                ))}
 
-                <IonButton 
-                  expand="block" 
-                  color="secondary" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    addProductRow();
-                  }}
-                  className="mt-3 custom-button secondary"
-                  style={{ 
-                    '--background': 'linear-gradient(135deg, var(--secondary), #eab308)',
-                    '--background-hover': 'linear-gradient(135deg, #eab308, var(--secondary))'
-                  } as any}
-                >
-                  ＋ Add a Product
-                </IonButton>
+                  {/* Totals Section */}
+                  <div className="elegant-card p-4 mb-4 bg-gradient-primary text-white">
+                    <h5 className="fw-bold mb-4 text-center">
+                      <FontAwesomeIcon icon={faDollarSign} className="me-2" />
+                      Payment Summary
+                    </h5>
+                    <div className="row g-3">
+                      <div className="col-12 col-md-4">
+                        <label className="form-label small text-black-50 mb-1">Total Amount</label>
+                        <div className="input-group">
+                          <span className="input-group-text bg-white border-0">
+                            <FontAwesomeIcon icon={faRupeeSign} />
+                          </span>
+                          <input
+                            type="number"
+                            className="form-control border-0 bg-white"
+                            value={formData.amount}
+                            onChange={(e) =>
+                              setFormData({ ...formData, amount: e.target.value })
+                            }
+                            required
+                            readOnly
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="col-12 col-md-4">
+                        <label className="form-label small text-black-50 mb-1">Advance Received</label>
+                        <div className="input-group">
+                          <span className="input-group-text bg-white border-0">
+                            <FontAwesomeIcon icon={faRupeeSign} />
+                          </span>
+                          <input
+                            type="number"
+                            className="form-control border-0"
+                            value={formData.advance_received}
+                            onChange={(e) =>
+                              setFormData({ ...formData, advance_received: e.target.value })
+                            }
+                            required
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="col-12 col-md-4">
+                        <label className="form-label small text-black-50 mb-1">Balance Due</label>
+                        <div className="input-group">
+                          <span className="input-group-text bg-white border-0">
+                            <FontAwesomeIcon icon={faRupeeSign} />
+                          </span>
+                          <input
+                            type="number"
+                            className="form-control border-0 fw-bold"
+                            value={(Number(formData.amount) - Number(formData.advance_received || 0)).toFixed(2)}
+                            readOnly
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold mb-3">Status</label>
+                    <div className="d-flex gap-3">
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="radio"
+                          id="statusOpen"
+                          checked={formData.status === "Open"}
+                          onChange={() =>
+                            setFormData({ ...formData, status: "Open" })
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <label className="form-check-label" htmlFor="statusOpen">
+                          <span className="d-flex align-items-center">
+                            <span className="badge bg-warning bg-gradient me-2">●</span>
+                            Open
+                          </span>
+                        </label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="radio"
+                          id="statusClosed"
+                          checked={formData.status === "Closed"}
+                          onChange={() =>
+                            setFormData({ ...formData, status: "Closed" })
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <label className="form-check-label" htmlFor="statusClosed">
+                          <span className="d-flex align-items-center">
+                            <span className="badge bg-success bg-gradient me-2">●</span>
+                            Closed
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="row g-3">
+                    <div className="col-12 col-md-6">
+                      <button 
+                        type="submit" 
+                        className="btn btn-elegant btn-elegant-primary w-100 py-3"
+                      >
+                        <FontAwesomeIcon icon={faCheckCircle} className="me-2" />
+                        Create Receipt
+                      </button>
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <button 
+                        type="button"
+                        className="btn btn-elegant btn-elegant-secondary w-100 py-3"
+                        onClick={() => router.push('/receipts')}
+                      >
+                        <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </form>
               </div>
-
-              {/* Amount */}
-              <div className="form-group">
-                <label className="form-label">Total Amount</label>
-                <input
-                  type="number"
-                  className="form-input"
-                  value={formData.amount}
-                  onChange={(e) =>
-                    setFormData({ ...formData, amount: e.target.value })
-                  }
-                  required
-                  readOnly
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-
-              {/* Advance */}
-              <div className="form-group">
-                <label className="form-label">Advance Received</label>
-                <input
-                  type="number"
-                  className="form-input"
-                  value={formData.advance_received}
-                  onChange={(e) =>
-                    setFormData({ ...formData, advance_received: e.target.value })
-                  }
-                  required
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-
-              {/* Status */}
-              <div className="form-group">
-                <label className="form-label">Status</label>
-                <select
-                  className="form-input"
-                  value={formData.status}
-                  onChange={(e) =>
-                    setFormData({ ...formData, status: e.target.value })
-                  }
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <option value="Open">Open</option>
-                  <option value="Closed">Closed</option>
-                </select>
-              </div>
-
-              {/* Submit */}
-              <IonButton 
-                type="submit" 
-                expand="block" 
-                color="primary" 
-                className="mt-4 custom-button"
-                style={{ 
-                  '--background': 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
-                  '--background-hover': 'linear-gradient(135deg, var(--primary-dark), var(--primary))'
-                } as any}
-                onClick={(e) => e.stopPropagation()}
-              >
-                Submit Receipt
-              </IonButton>
-
-              <IonButton 
-                expand="block" 
-                fill="clear" 
-                color="medium" 
-                routerLink="/receipts" 
-                className="mt-2"
-                style={{
-                  '--color': 'var(--gray-600)',
-                  '--color-hover': 'var(--primary)'
-                } as any}
-                onClick={(e) => e.stopPropagation()}
-              >
-                Back to Receipts
-              </IonButton>
-            </form>
+            </div>
           </div>
         </div>
 
         <IonToast
           isOpen={showToast}
           message={toastMessage}
-          duration={2000}
+          duration={3000}
           onDidDismiss={() => setShowToast(false)}
+          position="top"
         />
       </IonContent>
     </IonPage>

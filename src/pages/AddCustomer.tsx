@@ -1,7 +1,22 @@
-// AddCustomer.tsx - Updated with new styling
+// AddCustomer.tsx - Elegant Mobile Responsive Design
 import React, { useState } from "react";
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonToast, IonButton } from "@ionic/react";
+import { 
+  IonPage, 
+  IonHeader, 
+  IonToolbar, 
+  IonTitle, 
+  IonContent, 
+  IonToast, 
+  IonButton,
+  IonIcon 
+} from "@ionic/react";
+import { arrowBack, personAdd } from "ionicons/icons";
 import { api } from "../services/api";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faUser, faPhone, faSave, faArrowLeft,
+  faCheckCircle, faBuilding
+} from '@fortawesome/free-solid-svg-icons';
 
 const AddCustomer: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -27,76 +42,145 @@ const AddCustomer: React.FC = () => {
 
       await api.addCustomer(payload);
 
-      setToastMessage("Customer added successfully!");
+      setToastMessage("🎉 Customer added successfully!");
       setShowToast(true);
 
       setFormData({ name: "", contact: "" });
     } catch (err) {
       console.error(err);
-      setToastMessage("Failed to add customer.");
+      setToastMessage("❌ Failed to add customer.");
       setShowToast(true);
     }
   };
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="glass-effect">
         <IonToolbar>
-          <IonTitle>Add Customer</IonTitle>
+          <div className="container-fluid">
+            <div className="d-flex align-items-center justify-content-between">
+              <IonButton 
+                fill="clear" 
+                className="text-dark"
+                routerLink="/add-receipt"
+                routerDirection="back"
+              >
+                <FontAwesomeIcon icon={faArrowLeft} />
+              </IonButton>
+              <IonTitle className="text-center gradient-text">
+                <FontAwesomeIcon icon={faUser} className="me-2" />
+                Add Customer
+              </IonTitle>
+              <div style={{ width: '48px' }}></div>
+            </div>
+          </div>
         </IonToolbar>
       </IonHeader>
 
       <IonContent className="ion-padding">
-        <div className="form-container fade-in">
-          <div className="form-card hover-lift">
-            <h4 className="form-title">Create Customer</h4>
+        <div className="container-fluid">
+          <div className="row justify-content-center">
+            <div className="col-12 col-md-8 col-lg-6">
+              <div className="elegant-card p-4 p-md-5">
+                <div className="text-center mb-5">
+                  <div className="bg-primary bg-gradient p-3 rounded-circle d-inline-flex mb-3">
+                    <FontAwesomeIcon icon={faBuilding} className="text-white" size="2x" />
+                  </div>
+                  <h1 className="h3 fw-bold gradient-text mb-2">Add New Customer</h1>
+                  <p className="text-muted">Enter customer details to continue</p>
+                </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label className="form-label">Customer Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  className="form-input"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
+                <form onSubmit={handleSubmit}>
+                  {/* Customer Name */}
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold mb-2">
+                      <FontAwesomeIcon icon={faUser} className="me-2" />
+                      Customer Name *
+                    </label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-light">
+                        <FontAwesomeIcon icon={faUser} />
+                      </span>
+                      <input
+                        type="text"
+                        name="name"
+                        className="form-control form-control-lg"
+                        placeholder="Enter customer name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Contact */}
+                  <div className="mb-5">
+                    <label className="form-label fw-semibold mb-2">
+                      <FontAwesomeIcon icon={faPhone} className="me-2" />
+                      Contact Number (Optional)
+                    </label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-light">
+                        <FontAwesomeIcon icon={faPhone} />
+                      </span>
+                      <input
+                        type="tel"
+                        name="contact"
+                        className="form-control form-control-lg"
+                        placeholder="Enter contact number"
+                        value={formData.contact}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="form-text text-muted mt-2">
+                      You can add contact details later
+                    </div>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="row g-3">
+                    <div className="col-12 col-md-6">
+                      <IonButton 
+                        type="submit" 
+                        className="btn-elegant btn-elegant-primary w-100 py-3"
+                        expand="block"
+                      >
+                        <FontAwesomeIcon icon={faSave} className="me-2" />
+                        Save Customer
+                      </IonButton>
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <IonButton 
+                        className="btn-elegant btn-elegant-secondary w-100 py-3"
+                        routerLink="/add-receipt"
+                        routerDirection="back"
+                        expand="block"
+                      >
+                        <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
+                        Back to Receipt
+                      </IonButton>
+                    </div>
+                  </div>
+                </form>
+
+                {/* Help Text */}
+                <div className="mt-5 pt-4 border-top text-center">
+                  <small className="text-muted">
+                    <FontAwesomeIcon icon={faCheckCircle} className="me-1" />
+                    Customer will be available immediately for receipts
+                  </small>
+                </div>
               </div>
-
-              <div className="form-group">
-                <label className="form-label">Contact (Optional)</label>
-                <input
-                  type="text"
-                  name="contact"
-                  className="form-input"
-                  value={formData.contact}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <IonButton type="submit" expand="block" color="primary">
-                Save Customer
-              </IonButton>
-            </form>
-
-            <IonButton
-              expand="block"
-              fill="clear"
-              color="medium"
-              routerLink="/add-receipt"
-              className="mt-2"
-            >
-              Back to Receipt Form
-            </IonButton>
+            </div>
           </div>
         </div>
 
         <IonToast
           isOpen={showToast}
           message={toastMessage}
-          duration={2000}
+          duration={3000}
           onDidDismiss={() => setShowToast(false)}
+          position="top"
         />
       </IonContent>
     </IonPage>

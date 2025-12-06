@@ -7,19 +7,17 @@ import {
   IonContent,
   IonButton,
   IonSpinner,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardTitle,
-  IonBadge,
-  IonItem,
-  IonLabel,
 } from "@ionic/react";
 import { api, TopCustomer } from "../services/api";
-import "../styles/dashboard.css";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faReceipt, faUsers, faClock, 
+  faPlus, faEye, faUserPlus,
+  faCrown, faExclamationTriangle, faCheckCircle,
+  faCalendarAlt, faWallet, faBox,
+  faBolt, faChartBar, faArrowRight,
+  faIndianRupeeSign
+} from '@fortawesome/free-solid-svg-icons';
 
 interface Receipt {
   id: number;
@@ -58,7 +56,6 @@ const Home: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Load all receipts and customers
       const [receiptsData, customersData, topCustomersData] = await Promise.all([
         api.getReceipts(),
         api.getCustomers(),
@@ -67,12 +64,8 @@ const Home: React.FC = () => {
 
       setCustomers(customersData);
       setTopCustomers(topCustomersData.slice(0, 5));
-
-      // Process all receipts
       const processedReceipts = processReceipts(receiptsData, customersData);
       setAllReceipts(processedReceipts);
-      
-      // Get top 5 receipts by total due amount
       const topByAmount = processedReceipts
         .sort((a, b) => b.total_due - a.total_due)
         .slice(0, 5);
@@ -82,15 +75,9 @@ const Home: React.FC = () => {
       console.error('Dashboard loading error:', err);
       setError('Failed to load dashboard data. Please try again.');
       
-      // Set mock data for demonstration based on your response
       const mockReceipts: Receipt[] = [
         {
           id: 3, date: "2025-03-11", due_date: "2025-03-25", quantity: 1,
-          advance_received: 1.0, customer_id: 1, amount: 10.0, total_due: 9.0,
-          status: "Open", product_id: 1
-        },
-        {
-          id: 4, date: "2000-03-22", due_date: "2001-03-23", quantity: 1,
           advance_received: 1.0, customer_id: 1, amount: 10.0, total_due: 9.0,
           status: "Open", product_id: 1
         },
@@ -103,21 +90,6 @@ const Home: React.FC = () => {
           id: 9, date: "2025-11-10", due_date: "2025-11-19", quantity: 2,
           advance_received: 15.0, customer_id: 2, amount: 30.0, total_due: 45.0,
           status: "Open", product_id: 1
-        },
-        {
-          id: 13, date: "2025-11-26", due_date: "2025-11-28", quantity: 1,
-          advance_received: 10.0, customer_id: 1, amount: 20.0, total_due: 10.0,
-          status: "Open", product_id: 2
-        },
-        {
-          id: 14, date: "2024-01-10", due_date: "2024-01-15", quantity: 3,
-          advance_received: 50.0, customer_id: 2, amount: 200.0, total_due: 150.0,
-          status: "Open", product_id: 1
-        },
-        {
-          id: 15, date: "2024-01-08", due_date: "2024-01-12", quantity: 2,
-          advance_received: 20.0, customer_id: 3, amount: 80.0, total_due: 60.0,
-          status: "Open", product_id: 2
         }
       ];
 
@@ -135,11 +107,8 @@ const Home: React.FC = () => {
 
       setCustomers(mockCustomers);
       setTopCustomers(mockTopCustomers.slice(0, 5));
-      
       const processedReceipts = processReceipts(mockReceipts, mockCustomers);
       setAllReceipts(processedReceipts);
-      
-      // Get top 5 receipts by total due amount
       const topByAmount = processedReceipts
         .sort((a, b) => b.total_due - a.total_due)
         .slice(0, 5);
@@ -188,27 +157,12 @@ const Home: React.FC = () => {
     });
   };
 
-  const getOverdueBadgeColor = (days: number) => {
-    if (days > 30) return 'danger';
-    if (days > 7) return 'warning';
-    return 'medium';
-  };
-
-  const getOverdueText = (days: number) => {
-    if (days === 0) return 'Due today';
-    if (days === 1) return '1 day overdue';
-    return `${days} days overdue`;
-  };
-
   const getStatusBadge = (receipt: TopReceipt) => {
     if (receipt.is_overdue) {
       return (
-        <IonBadge 
-          color={getOverdueBadgeColor(receipt.days_overdue)}
-          style={{ fontSize: '0.7rem', fontWeight: '600' }}
-        >
-          {getOverdueText(receipt.days_overdue)}
-        </IonBadge>
+        <span className="item-badge danger">
+          {receipt.days_overdue}d overdue
+        </span>
       );
     }
     
@@ -218,16 +172,16 @@ const Home: React.FC = () => {
     
     if (daysUntilDue <= 7) {
       return (
-        <IonBadge color="warning" style={{ fontSize: '0.7rem', fontWeight: '600' }}>
-          Due in {daysUntilDue} days
-        </IonBadge>
+        <span className="item-badge warning">
+          Due in {daysUntilDue}d
+        </span>
       );
     }
     
     return (
-      <IonBadge color="success" style={{ fontSize: '0.7rem', fontWeight: '600' }}>
+      <span className="item-badge success">
         On track
-      </IonBadge>
+      </span>
     );
   };
 
@@ -239,7 +193,7 @@ const Home: React.FC = () => {
     .reduce((sum, receipt) => sum + receipt.total_due, 0);
   const overdueReceipts = allReceipts.filter(receipt => receipt.is_overdue).length;
 
-  // Get receipts for display based on active tab
+  // Get receipts for display
   const getDisplayReceipts = () => {
     if (activeTab === 'overdue') {
       return allReceipts.filter(receipt => receipt.is_overdue)
@@ -259,12 +213,15 @@ const Home: React.FC = () => {
       <IonPage>
         <IonHeader>
           <IonToolbar>
-            <IonTitle>Dashboard</IonTitle>
+            <IonTitle className="text-gradient">Dashboard</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonContent className="ion-padding">
-          <div className="loading-spinner">
-            <div className="spinner"></div>
+        <IonContent>
+          <div className="loading-state">
+            <div className="spinner-border text-gradient" style={{width: '3rem', height: '3rem'}} role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3 text-muted">Loading dashboard...</p>
           </div>
         </IonContent>
       </IonPage>
@@ -275,94 +232,173 @@ const Home: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Dashboard</IonTitle>
+          <IonTitle className="text-gradient">Sales Dashboard</IonTitle>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding" fullscreen>
-        {/* Hero Section */}
-        <div className="dashboard-hero fade-in-up">
-          <div className="hero-content">
-            <h1 className="hero-title">Sales Dashboard</h1>
-            <p className="hero-subtitle">Track payments and manage receipts</p>
+      <IonContent>
+        <div className="dashboard-wrapper">
+          <div className="dashboard-content">
             
-            <div className="stats-grid">
-              <div className="stat-card pulse-glow">
-                <div className="stat-value">{totalReceipts}</div>
-                <div className="stat-label">Total Receipts</div>
+            {/* Hero Section */}
+            <div className="dashboard-hero fade-in">
+              <h1 className="hero-title">Welcome to Sales Dashboard</h1>
+              <p className="hero-subtitle">Track your receipts and payments in real-time</p>
+            </div>
+
+            {/* Stats Cards - Full Width Section */}
+            <div className="full-width-section stats-section fade-in">
+              <div className="stats-header">
+                <h2 className="stats-title">
+                  <FontAwesomeIcon icon={faChartBar} className="me-2" />
+                  Quick Stats
+                </h2>
               </div>
-              <div className="stat-card">
-                <div className="stat-value">{formatCurrency(totalRevenue)}</div>
-                <div className="stat-label">Total Revenue</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value">{formatCurrency(pendingAmount)}</div>
-                <div className="stat-label">Pending Amount</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value">{overdueReceipts}</div>
-                <div className="stat-label">Overdue</div>
+              
+              <div className="stats-container">
+                <div className="stats-scroll">
+                  {/* Total Receipts */}
+                  <div className="stat-card slide-in">
+                    <div className="stat-icon-wrapper primary">
+                      <FontAwesomeIcon icon={faReceipt} className="stat-icon primary" />
+                    </div>
+                    <div className="stat-content">
+                      <h3>{totalReceipts}</h3>
+                      <p>Total Receipts</p>
+                    </div>
+                  </div>
+                  
+                  {/* Total Revenue */}
+                  <div className="stat-card slide-in">
+                    <div className="stat-icon-wrapper success">
+                      <FontAwesomeIcon icon={faIndianRupeeSign} className="stat-icon success" />
+                    </div>
+                    <div className="stat-content">
+                      <h3>{formatCurrency(totalRevenue)}</h3>
+                      <p>Total Revenue</p>
+                    </div>
+                  </div>
+                  
+                  {/* Pending Amount */}
+                  <div className="stat-card slide-in">
+                    <div className="stat-icon-wrapper warning">
+                      <FontAwesomeIcon icon={faWallet} className="stat-icon warning" />
+                    </div>
+                    <div className="stat-content">
+                      <h3>{formatCurrency(pendingAmount)}</h3>
+                      <p>Pending Amount</p>
+                    </div>
+                  </div>
+                  
+                  {/* Overdue */}
+                  <div className="stat-card slide-in">
+                    <div className="stat-icon-wrapper danger">
+                      <FontAwesomeIcon icon={faClock} className="stat-icon danger" />
+                    </div>
+                    <div className="stat-content">
+                      <h3>{overdueReceipts}</h3>
+                      <p>Overdue</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="quick-actions">
-          <IonButton 
-            className="action-btn" 
-            routerLink="/add-receipt"
-            expand="block"
-          >
-            📝 Create Receipt
-          </IonButton>
-          <IonButton 
-            className="action-btn secondary" 
-            routerLink="/receipts"
-            expand="block"
-          >
-            📋 View Receipts
-          </IonButton>
-          <IonButton 
-            className="action-btn success" 
-            routerLink="/add-customer"
-            expand="block"
-          >
-            👥 Add Customer
-          </IonButton>
-        </div>
+            {/* Quick Actions */}
+            <div className="actions-section fade-in">
+              <div className="actions-header">
+                <h2 className="actions-title">
+                  <FontAwesomeIcon icon={faBolt} className="me-2" />
+                  Quick Actions
+                </h2>
+                <p className="actions-subtitle">Common tasks for quick access</p>
+              </div>
+              
+              <div className="actions-grid">
+                {/* New Receipt */}
+                <IonButton 
+                  className="action-btn primary"
+                  routerLink="/add-receipt"
+                  routerDirection="forward"
+                  fill="clear"
+                >
+                  <FontAwesomeIcon icon={faPlus} className="action-icon" />
+                  <span className="action-text">New Receipt</span>
+                </IonButton>
+                
+                {/* View Receipts */}
+                <IonButton 
+                  className="action-btn"
+                  routerLink="/receipts"
+                  routerDirection="forward"
+                  fill="clear"
+                >
+                  <FontAwesomeIcon icon={faEye} className="action-icon" />
+                  <span className="action-text">View Receipts</span>
+                </IonButton>
+                
+                {/* Add Customer */}
+                <IonButton 
+                  className="action-btn"
+                  routerLink="/add-customer"
+                  routerDirection="forward"
+                  fill="clear"
+                >
+                  <FontAwesomeIcon icon={faUserPlus} className="action-icon" />
+                  <span className="action-text">Add Customer</span>
+                </IonButton>
+                
+                {/* Add Products */}
+                <IonButton 
+                  className="action-btn"
+                  routerLink="/add-product"
+                  routerDirection="forward"
+                  fill="clear"
+                >
+                  <FontAwesomeIcon icon={faBox} className="action-icon" />
+                  <span className="action-text">Add Products</span>
+                </IonButton>
+              </div>
+            </div>
 
-        {/* Main Content Grid */}
-        <IonGrid>
-          <IonRow>
-            {/* Top Customers Section */}
-            <IonCol size="12" size-lg="6">
-              <div className="dashboard-section">
-                <div className="section-header">
-                  <h2 className="section-title">Top 5 Customers</h2>
-                  <IonButton fill="clear" routerLink="/customers">
-                    View All
-                  </IonButton>
-                </div>
-
-                <div className="dashboard-card slide-in-left">
+            {/* Main Content Grid */}
+            <div className="content-section">
+              <div className="content-grid">
+                
+                {/* Top Customers Card */}
+                <div className="content-card fade-in">
                   <div className="card-header">
-                    <div className="card-icon">👑</div>
-                    <h3 className="card-title">Highest Due Amount</h3>
+                    <div className="card-title">
+                      <FontAwesomeIcon icon={faCrown} className="card-icon text-warning" />
+                      <div>
+                        <h5>Top Customers</h5>
+                        <p className="card-subtitle">Highest due amounts</p>
+                      </div>
+                    </div>
+                    <IonButton 
+                      fill="clear" 
+                      size="small"
+                      routerLink="/customers"
+                      routerDirection="forward"
+                      className="flex-center"
+                    >
+                      <span className="me-1">View All</span>
+                      <FontAwesomeIcon icon={faArrowRight} size="xs" />
+                    </IonButton>
                   </div>
 
                   {topCustomers.length > 0 ? (
                     <div className="ranking-list">
                       {topCustomers.map((customer, index) => (
-                        <div key={customer.customer_id} className="ranking-item">
+                        <div key={customer.customer_id} className="ranking-item slide-in">
                           <div className={`rank-badge rank-${index + 1}`}>
                             {index + 1}
                           </div>
-                          <div className="customer-info">
-                            <div className="customer-name">{customer.name}</div>
-                            <small>Customer ID: {customer.customer_id}</small>
+                          <div className="item-content">
+                            <div className="item-title">{customer.name}</div>
+                            <p className="item-subtitle">ID: {customer.customer_id}</p>
                           </div>
-                          <div className="amount-badge">
+                          <div className="item-value">
                             {formatCurrency(customer.total_due)}
                           </div>
                         </div>
@@ -370,171 +406,160 @@ const Home: React.FC = () => {
                     </div>
                   ) : (
                     <div className="empty-state">
-                      <div className="empty-icon">📊</div>
-                      <p>No customer data available</p>
+                      <FontAwesomeIcon icon={faUsers} className="empty-icon" />
+                      <p className="empty-text">No customer data available</p>
+                      <IonButton 
+                        size="small"
+                        routerLink="/add-customer"
+                        routerDirection="forward"
+                        className="mt-2"
+                      >
+                        Add First Customer
+                      </IonButton>
                     </div>
                   )}
                 </div>
-              </div>
-            </IonCol>
 
-            {/* Top Receipts Section */}
-            <IonCol size="12" size-lg="6">
-              <div className="dashboard-section">
-                <div className="section-header">
-                  <h2 className="section-title">Top 5 Receipts</h2>
-                  <IonButton fill="clear" routerLink="/receipts">
-                    View All
-                  </IonButton>
-                </div>
-
-                <div className="dashboard-card slide-in-left">
+                {/* Top Receipts Card */}
+                <div className="content-card fade-in">
                   <div className="card-header">
-                    <div className="card-icon">💰</div>
-                    <h3 className="card-title">
-                      {activeTab === 'overdue' ? 'Overdue Receipts' : 'Highest Due Amount'}
-                    </h3>
-                  </div>
-
-                  {/* Tab Switcher */}
-                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <IonButton 
-                      fill={activeTab === 'all' ? 'solid' : 'outline'}
-                      size="small"
-                      onClick={() => setActiveTab('all')}
-                    >
-                      Top Amounts
-                    </IonButton>
-                    <IonButton 
-                      fill={activeTab === 'overdue' ? 'solid' : 'outline'}
-                      size="small"
-                      onClick={() => setActiveTab('overdue')}
-                    >
-                      Overdue
-                    </IonButton>
+                    <div className="card-title">
+                      <FontAwesomeIcon icon={faReceipt} className="card-icon text-primary" />
+                      <div>
+                        <h5>Top Receipts</h5>
+                        <p className="card-subtitle">Highest due amounts</p>
+                      </div>
+                    </div>
+                    <div className="flex-center">
+                      <button 
+                        type="button"
+                        className={`btn btn-sm ${activeTab === 'all' ? 'btn-primary' : 'btn-outline-primary'} me-2`}
+                        onClick={() => setActiveTab('all')}
+                      >
+                        All
+                      </button>
+                      <button 
+                        type="button"
+                        className={`btn btn-sm ${activeTab === 'overdue' ? 'btn-danger' : 'btn-outline-danger'}`}
+                        onClick={() => setActiveTab('overdue')}
+                      >
+                        Overdue
+                      </button>
+                    </div>
                   </div>
 
                   {displayReceipts.length > 0 ? (
                     <div className="ranking-list">
                       {displayReceipts.map((receipt, index) => (
-                        <div key={receipt.id} className="ranking-item">
+                        <div key={receipt.id} className="ranking-item slide-in">
                           <div className={`rank-badge rank-${index + 1}`}>
                             {index + 1}
                           </div>
-                          <div className="customer-info" style={{ flex: 2 }}>
-                            <div className="customer-name">{receipt.customer_name}</div>
-                            <small>
-                              Due: {formatDate(receipt.due_date)} • 
-                              Receipt #{receipt.id}
-                            </small>
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                            <div className="amount-badge">
-                              {formatCurrency(receipt.total_due)}
+                          <div className="item-content">
+                            <div className="item-title text-truncate">{receipt.customer_name}</div>
+                            <div className="flex-between">
+                              <p className="item-subtitle">
+                                Due: {formatDate(receipt.due_date)} • #{receipt.id}
+                              </p>
+                              {getStatusBadge(receipt)}
                             </div>
-                            {getStatusBadge(receipt)}
+                          </div>
+                          <div className="item-value">
+                            {formatCurrency(receipt.total_due)}
                           </div>
                         </div>
                       ))}
                     </div>
-                  ) : activeTab === 'overdue' ? (
-                    <div className="empty-state">
-                      <div className="empty-icon">🎉</div>
-                      <p>No overdue receipts! Great job!</p>
-                      <small>All payments are up to date</small>
-                    </div>
                   ) : (
                     <div className="empty-state">
-                      <div className="empty-icon">📄</div>
-                      <p>No receipt data available</p>
+                      <FontAwesomeIcon icon={faCheckCircle} className="empty-icon text-success" />
+                      <p className="empty-text">No overdue receipts! Great job!</p>
+                      <small className="text-muted">All payments are up to date</small>
                     </div>
                   )}
                 </div>
               </div>
-            </IonCol>
-          </IonRow>
+            </div>
 
-          {/* All Receipts Section */}
-          <IonRow>
-            <IonCol size="12">
-              <div className="dashboard-section">
-                <div className="section-header">
-                  <h2 className="section-title">All Receipts</h2>
-                  <IonButton fill="clear" routerLink="/receipts">
-                    View Detailed List
+            {/* Recent Receipts Table */}
+            <div className="content-section fade-in">
+              <div className="content-card">
+                <div className="card-header">
+                  <div className="card-title">
+                    <FontAwesomeIcon icon={faCalendarAlt} className="card-icon" />
+                    <div>
+                      <h5>Recent Receipts</h5>
+                      <p className="card-subtitle">Latest 10 receipts</p>
+                    </div>
+                  </div>
+                  <IonButton 
+                    fill="clear" 
+                    size="small"
+                    routerLink="/receipts"
+                    routerDirection="forward"
+                    className="flex-center"
+                  >
+                    <span className="me-1">View All</span>
+                    <FontAwesomeIcon icon={faArrowRight} size="xs" />
                   </IonButton>
                 </div>
-                
-                <div className="dashboard-card">
-                  <div className="card-header">
-                    <div className="card-icon">📋</div>
-                    <h3 className="card-title">Complete Receipt List</h3>
-                  </div>
-                  
-                  {allReceipts.length > 0 ? (
-                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                      {allReceipts.map((receipt) => (
-                        <IonItem key={receipt.id} lines="full">
-                          <IonLabel>
-                            <h3 style={{ fontWeight: '600', marginBottom: '4px' }}>
-                              {receipt.customer_name} 
-                              <IonBadge 
-                                color={receipt.is_overdue ? 'danger' : 'success'} 
-                                style={{ marginLeft: '8px', fontSize: '0.7rem' }}
-                              >
-                                #{receipt.id}
-                              </IonBadge>
-                            </h3>
-                            <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '4px' }}>
-                              Due: {formatDate(receipt.due_date)} • 
-                              Amount: {formatCurrency(receipt.amount)} • 
-                              Due: {formatCurrency(receipt.total_due)}
-                            </p>
-                            <p style={{ fontSize: '0.8rem', color: '#999' }}>
-                              Created: {formatDate(receipt.date)} • 
-                              Status: {receipt.status}
-                            </p>
-                          </IonLabel>
-                          <div slot="end" style={{ textAlign: 'right' }}>
-                            <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '4px' }}>
-                              {formatCurrency(receipt.total_due)}
-                            </div>
-                            {getStatusBadge(receipt)}
-                          </div>
-                        </IonItem>
+
+                <div className="table-responsive">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Customer</th>
+                        <th>Due Date</th>
+                        <th>Amount</th>
+                        <th>Due</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allReceipts.slice(0, 10).map((receipt) => (
+                        <tr key={receipt.id}>
+                          <td>
+                            <div className="item-title">{receipt.customer_name}</div>
+                            <small className="item-subtitle">#{receipt.id}</small>
+                          </td>
+                          <td>
+                            <div className="item-title">{formatDate(receipt.due_date)}</div>
+                            <small className="item-subtitle">{formatDate(receipt.date)}</small>
+                          </td>
+                          <td className="item-title">{formatCurrency(receipt.amount)}</td>
+                          <td className="item-value">{formatCurrency(receipt.total_due)}</td>
+                          <td>{getStatusBadge(receipt)}</td>
+                        </tr>
                       ))}
-                    </div>
-                  ) : (
-                    <div className="empty-state">
-                      <div className="empty-icon">📄</div>
-                      <p>No receipts found</p>
-                      <IonButton routerLink="/add-receipt" className="mt-3">
-                        Create First Receipt
-                      </IonButton>
-                    </div>
-                  )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            </IonCol>
-          </IonRow>
-        </IonGrid>
-
-        {/* Error Message */}
-        {error && (
-          <div className="dashboard-card" style={{ borderColor: '#fed7d7', background: '#fff5f5' }}>
-            <div style={{ textAlign: 'center', color: '#c53030' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
-              <h3 style={{ marginBottom: '0.5rem' }}>Connection Issue</h3>
-              <p>{error}</p>
-              <IonButton className="mt-3" onClick={loadDashboardData}>
-                Retry Loading
-              </IonButton>
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="content-section fade-in">
+                <div className="content-card border-danger">
+                  <div className="text-center text-danger">
+                    <FontAwesomeIcon icon={faExclamationTriangle} size="2xl" className="mb-3" />
+                    <h5 className="mb-2">Connection Issue</h5>
+                    <p className="mb-3">{error}</p>
+                    <IonButton 
+                      className="btn-primary"
+                      onClick={loadDashboardData}
+                    >
+                      Retry Loading 
+                    </IonButton>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </IonContent>
     </IonPage>
   );
 };
 
-export default Home;
+export default Home; 

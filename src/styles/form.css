@@ -1,16 +1,16 @@
-ion-item {
-  margin-bottom: 12px;
-  border-radius: 12px;
-  --background: #f8f9fa;
-  --inner-padding-end: 12px;
-}
+  ion-item {
+    margin-bottom: 12px;
+    border-radius: 12px;
+    --background: #f8f9fa;
+    --inner-padding-end: 12px;
+  }
 
-ion-label {
-  font-weight: 500;
-}
+  ion-label {
+    font-weight: 500;
+  }
 
-.submit-btn {
-  margin-top: 16px;
-  --background: #007bff;
-  color: white;
-}
+  .submit-btn {
+    margin-top: 16px;
+    --background: #007bff;
+    color: white;
+  }

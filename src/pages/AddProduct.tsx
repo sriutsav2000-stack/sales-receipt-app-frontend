@@ -1,4 +1,4 @@
-// AddProduct.tsx - Updated with new styling
+// AddProduct.tsx - Elegant Mobile Responsive Design
 import React, { useState } from "react";
 import {
   IonPage,
@@ -10,6 +10,11 @@ import {
   IonButton,
 } from "@ionic/react";
 import { api } from "../services/api";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faBox, faRupeeSign, faSave, faArrowLeft,
+  faCube, faTag, faCheckCircle
+} from '@fortawesome/free-solid-svg-icons';
 
 const AddProduct: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -32,73 +37,145 @@ const AddProduct: React.FC = () => {
         price: Number(formData.price),
       });
 
-      setToast({ show: true, message: "Product added successfully" });
+      setToast({ show: true, message: "🎉 Product added successfully!" });
       setFormData({ name: "", price: "" });
     } catch (err) {
       console.error(err);
-      setToast({ show: true, message: "Failed to add product" });
+      setToast({ show: true, message: "❌ Failed to add product" });
     }
   };
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="glass-effect">
         <IonToolbar>
-          <IonTitle>Add Product</IonTitle>
+          <div className="container-fluid">
+            <div className="d-flex align-items-center justify-content-between">
+              <IonButton 
+                fill="clear" 
+                className="text-dark"
+                routerLink="/add-receipt"
+                routerDirection="back"
+              >
+                <FontAwesomeIcon icon={faArrowLeft} />
+              </IonButton>
+              <IonTitle className="text-center gradient-text">
+                <FontAwesomeIcon icon={faBox} className="me-2" />
+                Add Product
+              </IonTitle>
+              <div style={{ width: '48px' }}></div>
+            </div>
+          </div>
         </IonToolbar>
       </IonHeader>
 
       <IonContent className="ion-padding">
-        <div className="form-container fade-in">
-          <div className="form-card hover-lift">
-            <h4 className="form-title">Add New Product</h4>
+        <div className="container-fluid">
+          <div className="row justify-content-center">
+            <div className="col-12 col-md-8 col-lg-6">
+              <div className="elegant-card p-4 p-md-5">
+                <div className="text-center mb-5">
+                  <div className="bg-success bg-gradient p-3 rounded-circle d-inline-flex mb-3">
+                    <FontAwesomeIcon icon={faCube} className="text-white" size="2x" />
+                  </div>
+                  <h1 className="h3 fw-bold gradient-text mb-2">Add New Product</h1>
+                  <p className="text-muted">Enter product details to continue</p>
+                </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label className="form-label">Product Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  className="form-input"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
+                <form onSubmit={handleSubmit}>
+                  {/* Product Name */}
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold mb-2">
+                      <FontAwesomeIcon icon={faTag} className="me-2" />
+                      Product Name *
+                    </label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-light">
+                        <FontAwesomeIcon icon={faBox} />
+                      </span>
+                      <input
+                        type="text"
+                        name="name"
+                        className="form-control form-control-lg"
+                        placeholder="Enter product name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Price */}
+                  <div className="mb-5">
+                    <label className="form-label fw-semibold mb-2">
+                      <FontAwesomeIcon icon={faRupeeSign} className="me-2" />
+                      Price *
+                    </label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-light">
+                        <FontAwesomeIcon icon={faRupeeSign} />
+                      </span>
+                      <input
+                        type="number"
+                        name="price"
+                        className="form-control form-control-lg"
+                        placeholder="Enter price"
+                        value={formData.price}
+                        onChange={handleChange}
+                        required
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div className="form-text text-muted mt-2">
+                      Enter the base price for this product
+                    </div>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="row g-3">
+                    <div className="col-12 col-md-6">
+                      <IonButton 
+                        type="submit" 
+                        className="btn-elegant btn-elegant-primary w-100 py-3"
+                        expand="block"
+                      >
+                        <FontAwesomeIcon icon={faSave} className="me-2" />
+                        Add Product
+                      </IonButton>
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <IonButton 
+                        className="btn-elegant btn-elegant-secondary w-100 py-3"
+                        routerLink="/add-receipt"
+                        routerDirection="back"
+                        expand="block"
+                      >
+                        <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
+                        Back to Receipt
+                      </IonButton>
+                    </div>
+                  </div>
+                </form>
+
+                {/* Help Text */}
+                <div className="mt-5 pt-4 border-top text-center">
+                  <small className="text-muted">
+                    <FontAwesomeIcon icon={faCheckCircle} className="me-1" />
+                    Product will be available immediately for receipts
+                  </small>
+                </div>
               </div>
-
-              <div className="form-group">
-                <label className="form-label">Price</label>
-                <input
-                  type="number"
-                  name="price"
-                  className="form-input"
-                  value={formData.price}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <IonButton expand="block" type="submit" color="primary">
-                Add Product
-              </IonButton>
-
-              <IonButton
-                expand="block"
-                fill="clear"
-                routerLink="/add-receipt"
-                className="mt-2"
-              >
-                Back
-              </IonButton>
-            </form>
+            </div>
           </div>
         </div>
 
         <IonToast
           isOpen={toast.show}
           message={toast.message}
-          duration={2000}
+          duration={3000}
           onDidDismiss={() => setToast({ ...toast, show: false })}
+          position="top"
         />
       </IonContent>
     </IonPage>
