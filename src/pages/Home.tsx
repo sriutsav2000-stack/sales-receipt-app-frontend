@@ -1,3 +1,6 @@
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { IonFab, IonFabButton, IonIcon, IonToast } from "@ionic/react";
+import { camera } from "ionicons/icons";
 import React, { useEffect, useState } from "react";
 import {
   IonPage,
@@ -46,6 +49,9 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overdue' | 'all'>('all');
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
 
   useEffect(() => {
     loadDashboardData();
@@ -118,6 +124,42 @@ const Home: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const handleScanReceipt = async () => {
+    try {
+      const photo = await Camera.getPhoto({
+        quality: 90,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Camera,
+      });
+
+      if (!photo.webPath) return;
+
+      const blob = await (await fetch(photo.webPath)).blob();
+
+      const formData = new FormData();
+      formData.append("file", blob, "receipt.jpg");
+
+      await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/receipts/upload-image`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      setToastMessage("Receipt scanned successfully");
+      setShowToast(true);
+
+      // reload dashboard data
+      loadDashboardData();
+    } catch (err) {
+      console.error(err);
+      setToastMessage("Failed to scan receipt");
+      setShowToast(true);
+    }
+  };
+
 
   const processReceipts = (receipts: Receipt[], customers: any[]): TopReceipt[] => {
     const today = new Date();
@@ -240,6 +282,12 @@ const Home: React.FC = () => {
         <div className="dashboard-wrapper">
           <div className="dashboard-content">
             
+            <IonFab vertical="top" horizontal="end" slot="fixed">
+              <IonFabButton color="primary" onClick={handleScanReceipt}>
+                <IonIcon icon={camera} />
+              </IonFabButton>
+            </IonFab>
+
             {/* Hero Section */}
             <div className="dashboard-hero fade-in">
               <h1 className="hero-title">Welcome to Sales Dashboard</h1>
@@ -557,6 +605,12 @@ const Home: React.FC = () => {
             )}
           </div>
         </div>
+        <IonToast
+          isOpen={showToast}
+          message={toastMessage}
+          duration={2000}
+          onDidDismiss={() => setShowToast(false)}
+        />
       </IonContent>
     </IonPage>
   );
