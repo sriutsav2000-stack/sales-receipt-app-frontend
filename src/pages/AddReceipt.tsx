@@ -15,6 +15,8 @@ import { add, arrowBack, receipt, close, search, chevronDown } from "ionicons/ic
 import { api } from "../services/api";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRupeeSign, faCalendarAlt, faUser, faBox,faSearch,faArrowLeft, faShoppingCart, faDollarSign, faReceipt, faPlus, faTrash, faUndo, faCheckCircle, faClock } from '@fortawesome/free-solid-svg-icons';
+import Navigation from "../components/Navigation";
+
 
 interface Customer {
   id: number;
@@ -299,26 +301,9 @@ const AddReceipt: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="glass-effect">
-        <IonToolbar>
-          <div className="container-fluid">
-            <div className="d-flex align-items-center justify-content-between">
-              <button 
-                className="btn btn-link text-dark p-0" 
-                onClick={() => router.goBack()}
-                style={{ fontSize: '1.5rem' }}
-              >
-                <FontAwesomeIcon icon={faArrowLeft} />
-              </button>
-              <IonTitle className="text-center gradient-text">
-                <FontAwesomeIcon icon={faReceipt} className="me-2" />
-                New Receipt
-              </IonTitle>
-              <div style={{ width: '40px' }}></div>
-            </div>
-          </div>
-        </IonToolbar>
-      </IonHeader>
+            <IonHeader>
+          <Navigation title="Add Receipt" />
+        </IonHeader>
 
       <IonContent className="ion-padding">
         <div className="container-fluid fade-in-up">
@@ -346,7 +331,7 @@ const AddReceipt: React.FC = () => {
                       <div className="input-group">
                         <input
                           type="date"
-                          className="form-control form-control-lg"
+                          className="form-control form-control-sm"
                           value={formData.date}
                           onChange={(e) =>
                             setFormData({ ...formData, date: e.target.value })
@@ -363,7 +348,7 @@ const AddReceipt: React.FC = () => {
                       <div className="input-group">
                         <input
                           type="date"
-                          className="form-control form-control-lg"
+                          className="form-control form-control-sm"
                           value={formData.due_date}
                           onChange={(e) =>
                             setFormData({ ...formData, due_date: e.target.value })
@@ -386,7 +371,7 @@ const AddReceipt: React.FC = () => {
                           <FontAwesomeIcon icon={faSearch} />
                         </span>
                         <input
-                          className="form-control border-start-0"
+                          className="form-label fw-semibold mb-2"
                           placeholder="Search customer by name..."
                           value={customerSearch}
                           onFocus={() => setShowCustomerDropdown(true)}

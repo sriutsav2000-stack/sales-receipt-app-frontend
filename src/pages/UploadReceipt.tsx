@@ -12,6 +12,7 @@ import {
 } from "@ionic/react";
 import { camera } from "ionicons/icons";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+import Navigation from "../components/Navigation";
 
 const UploadReceipt: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -70,11 +71,9 @@ const UploadReceipt: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Upload Receipt</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+        <IonHeader>
+          <Navigation title="Upload Receipt" />
+        </IonHeader>
 
       <IonContent className="ion-padding ion-text-center">
         <div style={{ marginTop: "30%" }}>

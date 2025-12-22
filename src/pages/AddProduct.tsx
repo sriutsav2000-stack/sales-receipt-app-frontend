@@ -16,6 +16,8 @@ import {
   faCube, faTag, faCheckCircle
 } from '@fortawesome/free-solid-svg-icons';
 
+import Navigation from "../components/Navigation";
+
 const AddProduct: React.FC = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -47,27 +49,9 @@ const AddProduct: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="glass-effect">
-        <IonToolbar>
-          <div className="container-fluid">
-            <div className="d-flex align-items-center justify-content-between">
-              <IonButton 
-                fill="clear" 
-                className="text-dark"
-                routerLink="/add-receipt"
-                routerDirection="back"
-              >
-                <FontAwesomeIcon icon={faArrowLeft} />
-              </IonButton>
-              <IonTitle className="text-center gradient-text">
-                <FontAwesomeIcon icon={faBox} className="me-2" />
-                Add Product
-              </IonTitle>
-              <div style={{ width: '48px' }}></div>
-            </div>
-          </div>
-        </IonToolbar>
-      </IonHeader>
+       <IonHeader>
+          <Navigation title="Add Product" />
+        </IonHeader>
 
       <IonContent className="ion-padding">
         <div className="container-fluid">
@@ -96,7 +80,7 @@ const AddProduct: React.FC = () => {
                       <input
                         type="text"
                         name="name"
-                        className="form-control form-control-lg"
+                        className="form-control form-control-sm"
                         placeholder="Enter product name"
                         value={formData.name}
                         onChange={handleChange}
@@ -118,7 +102,7 @@ const AddProduct: React.FC = () => {
                       <input
                         type="number"
                         name="price"
-                        className="form-control form-control-lg"
+                        className="form-control form-control-sm"
                         placeholder="Enter price"
                         value={formData.price}
                         onChange={handleChange}

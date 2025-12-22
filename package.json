@@ -15,7 +15,7 @@
     "@capacitor/android": "^7.4.4",
     "@capacitor/camera": "^7.0.3",
     "@capacitor/cli": "^7.4.4",
-    "@capacitor/core": "^7.4.4",
+    "@capacitor/core": "8.0.0",
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
     "@fortawesome/free-brands-svg-icons": "^7.1.0",
     "@fortawesome/free-regular-svg-icons": "^7.1.0",

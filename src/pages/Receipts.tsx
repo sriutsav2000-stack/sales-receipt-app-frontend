@@ -10,6 +10,7 @@ import {
   IonButton,
 } from "@ionic/react";
 import { api } from "../services/api";
+import Navigation from "../components/Navigation";
 
 interface Receipt {
   id: number;
@@ -39,11 +40,9 @@ const Receipts: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Receipts</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+        <IonHeader>
+          <Navigation title="Receipts" />
+        </IonHeader>
 
       <IonContent className="ion-padding">
         {/* Enhanced Header */}
