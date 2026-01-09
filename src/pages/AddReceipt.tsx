@@ -1,22 +1,18 @@
-// AddReceipt.tsx - Elegant Redesign with Bootstrap
-import React, { useEffect, useState, useRef } from "react";
+// src/pages/AddReceipt.tsx
+import React, { useEffect, useState } from "react";
 import {
   IonPage,
   IonHeader,
-  IonTitle,
   IonToolbar,
   IonContent,
   IonToast,
   IonButton,
   useIonRouter,
-  IonIcon,
 } from "@ionic/react";
-import { add, arrowBack, receipt, close, search, chevronDown } from "ionicons/icons";
 import { api } from "../services/api";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRupeeSign, faCalendarAlt, faUser, faBox,faSearch,faArrowLeft, faShoppingCart, faDollarSign, faReceipt, faPlus, faTrash, faUndo, faCheckCircle, faClock } from '@fortawesome/free-solid-svg-icons';
+import { faRupeeSign, faCalendarAlt, faUser, faBox, faSearch, faArrowLeft, faShoppingCart, faDollarSign, faReceipt, faPlus, faTrash, faUndo, faCheckCircle, faClock } from '@fortawesome/free-solid-svg-icons';
 import Navigation from "../components/Navigation";
-
 
 interface Customer {
   id: number;
@@ -28,15 +24,6 @@ interface Product {
   id: number;
   name: string;
   price: number;
-}
-
-interface ProductRow {
-  product_id: number | null;
-  product_name: string;
-  quantity: number | null;
-  original_price: number | null;
-  current_price: number | null;
-  show: boolean;
 }
 
 const STORAGE_KEY = "add_receipt_form_data";
@@ -51,27 +38,24 @@ const AddReceipt: React.FC = () => {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
 
-  const [productRows, setProductRows] = useState<ProductRow[]>([
-    {
-      product_id: null,
-      product_name: "",
-      quantity: null,
-      original_price: null,
-      current_price: null,
-      show: false,
-    },
-  ]);
+  // SINGLE PRODUCT SELECTION (not multiple rows)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [productSearch, setProductSearch] = useState("");
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [quantity, setQuantity] = useState<number | "">(1);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     status: "Open",
-    amount: "",
+    amount: "0",
     advance_received: "",
+    balance_due: "0"
   });
 
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load from sessionStorage
   useEffect(() => {
@@ -84,24 +68,25 @@ const AddReceipt: React.FC = () => {
           date: new Date().toISOString().split('T')[0],
           due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           status: "Open",
-          amount: "",
+          amount: "0",
           advance_received: "",
+          balance_due: "0"
         }
       );
 
       setCustomerSearch(d.customerSearch || "");
       setSelectedCustomerId(d.selectedCustomerId || null);
-
-      setProductRows(
-        (d.productRows || []).map((row: any) => ({
-          product_id: row.product_id ?? null,
-          product_name: row.product_name ?? "",
-          quantity: row.quantity ?? null,
-          original_price: row.original_price ?? row.price ?? null,
-          current_price: row.current_price ?? row.price ?? null,
-          show: false,
-        }))
-      );
+      setProductSearch(d.productSearch || "");
+      setQuantity(d.quantity || 1);
+      
+      // Restore selected product if exists
+      if (d.selectedProductId && d.selectedProductName && d.selectedProductPrice) {
+        setSelectedProduct({
+          id: d.selectedProductId,
+          name: d.selectedProductName,
+          price: d.selectedProductPrice
+        });
+      }
     }
   }, []);
 
@@ -113,23 +98,30 @@ const AddReceipt: React.FC = () => {
         formData,
         customerSearch,
         selectedCustomerId,
-        productRows,
+        productSearch,
+        quantity,
+        selectedProductId: selectedProduct?.id,
+        selectedProductName: selectedProduct?.name,
+        selectedProductPrice: selectedProduct?.price
       })
     );
-  }, [formData, customerSearch, selectedCustomerId, productRows]);
+  }, [formData, customerSearch, selectedCustomerId, productSearch, quantity, selectedProduct]);
 
   // Fetch customers + products
   useEffect(() => {
     const load = async () => {
       try {
+        console.log("📥 Loading customers and products...");
         const [cust, prod] = await Promise.all([
           api.getCustomers(),
           api.getProducts(),
         ]);
 
+        console.log("✅ Loaded:", { customers: cust.length, products: prod.length });
         setCustomers(cust);
         setProducts(prod);
       } catch (err) {
+        console.error("❌ Failed to load:", err);
         setToastMessage("Failed to load customer/product list.");
         setShowToast(true);
       }
@@ -138,172 +130,218 @@ const AddReceipt: React.FC = () => {
     load();
   }, []);
 
-  // Add new product row
-  const addProductRow = () => {
-    setProductRows((prev) => [
-      ...prev,
-      {
-        product_id: null,
-        product_name: "",
-        quantity: null,
-        original_price: null,
-        current_price: null,
-        show: false,
-      },
-    ]);
-  };
-
-  const updateProductRow = (
-    index: number,
-    field: keyof ProductRow,
-    value: any
-  ) => {
-    const updated = [...productRows];
-    updated[index] = { ...updated[index], [field]: value };
-    
-    if (field === 'current_price' || field === 'quantity') {
-      recalc(updated);
+  // Recalculate totals when product or quantity changes
+  useEffect(() => {
+    if (selectedProduct && quantity && quantity > 0) {
+      const total = selectedProduct.price * quantity;
+      const advance = parseFloat(formData.advance_received) || 0;
+      const balance = Math.max(0, total - advance);
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        amount: total.toString(),
+        balance_due: balance.toFixed(2)
+      }));
+    } else {
+      setFormData(prev => ({ 
+        ...prev, 
+        amount: "0",
+        balance_due: "0"
+      }));
     }
-    
-    setProductRows(updated);
-  };
-
-  const deleteProductRow = (index: number) => {
-    const updated = productRows.filter((_, i) => i !== index);
-    setProductRows(updated);
-    recalc(updated);
-  };
-
-  const recalc = (rows: ProductRow[]) => {
-    let total = 0;
-    rows.forEach((r) => {
-      if (r.current_price && r.quantity) total += r.current_price * r.quantity;
-    });
-    setFormData((prev) => ({ ...prev, amount: String(total || "") }));
-  };
-
-  const resetPrice = (index: number) => {
-    const updated = [...productRows];
-    if (updated[index].original_price) {
-      updated[index].current_price = updated[index].original_price;
-      recalc(updated);
-    }
-    setProductRows(updated);
-  };
+  }, [selectedProduct, quantity, formData.advance_received]);
 
   const filteredCustomers = customers.filter((c) =>
     c.name.toLowerCase().includes(customerSearch.toLowerCase())
   );
 
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(productSearch.toLowerCase())
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
+    // Validation
+    if (!selectedCustomerId) {
+      setToastMessage("❌ Please select a customer");
+      setShowToast(true);
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!selectedProduct) {
+      setToastMessage("❌ Please select a product");
+      setShowToast(true);
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!quantity || quantity < 1) {
+      setToastMessage("❌ Please enter a valid quantity (min: 1)");
+      setShowToast(true);
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
-      const items = productRows
-        .filter((r) => r.product_id && r.quantity)
-        .map((r) => ({
-          product_id: r.product_id!,
-          quantity: r.quantity!,
-          price: r.current_price!,
-        }));
+      console.log("📤 Submitting receipt...");
+      
+      // Parse amounts
+      const amount = parseFloat(formData.amount) || 0;
+      const advance_received = parseFloat(formData.advance_received) || 0;
 
-      await api.addReceipt({
+      const payload = {
         date: formData.date,
         due_date: formData.due_date,
         status: formData.status,
-        amount: Number(formData.amount),
-        advance_received: Number(formData.advance_received),
+        amount: amount,
+        advance_received: advance_received,
         customer_id: selectedCustomerId,
-        items,
-      });
+        product_id: selectedProduct.id,
+        quantity: quantity
+      };
 
+      console.log("📦 Payload to backend:", payload);
+      console.log("🔐 Token exists:", !!api.getToken());
+
+      const result = await api.addReceipt(payload);
+      console.log("✅ Receipt added:", result);
+
+      // Clear storage
       sessionStorage.removeItem(STORAGE_KEY);
 
+      // Reset form
       setFormData({
         date: new Date().toISOString().split('T')[0],
         due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         status: "Open",
-        amount: "",
+        amount: "0",
         advance_received: "",
+        balance_due: "0"
       });
       setCustomerSearch("");
       setSelectedCustomerId(null);
-      setProductRows([{
-        product_id: null,
-        product_name: "",
-        quantity: null,
-        original_price: null,
-        current_price: null,
-        show: false,
-      }]);
+      setProductSearch("");
+      setSelectedProduct(null);
+      setQuantity(1);
 
       setToastMessage("🎉 Receipt added successfully!");
       setShowToast(true);
-    } catch (err) {
-      setToastMessage("❌ Failed to add receipt.");
+
+      // Redirect after delay
+      setTimeout(() => {
+        router.push('/receipts');
+      }, 1500);
+
+    } catch (err: any) {
+      console.error("❌ Add receipt error:", err);
+      
+      let errorMsg = "Failed to add receipt.";
+      if (err.message.includes("422")) {
+        errorMsg = "Validation error. Please check your inputs.";
+      } else if (err.message.includes("401")) {
+        errorMsg = "Authentication failed. Please login again.";
+        setTimeout(() => router.push('/'), 2000);
+      } else if (err.message.includes("Network")) {
+        errorMsg = "Network error. Check if backend is running.";
+      }
+      
+      setToastMessage(`❌ ${errorMsg}`);
       setShowToast(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const goToAddCustomer = () => router.push("/add-customer");
   const goToAddProduct = () => router.push("/add-product");
 
-  const handleProductSelect = (index: number, product: Product) => {
-    const updatedRows = productRows.map((row, i) => {
-      if (i === index) {
-        return {
-          ...row,
-          product_id: product.id,
-          product_name: product.name,
-          original_price: product.price,
-          current_price: product.price,
-          show: false
-        };
-      }
-      return row;
-    });
+  // Handle advance received change with better UX
+  const handleAdvanceChange = (value: string) => {
+    // Allow empty string for backspace
+    if (value === "") {
+      setFormData(prev => ({ 
+        ...prev, 
+        advance_received: "",
+        balance_due: prev.amount
+      }));
+      return;
+    }
     
-    setProductRows(updatedRows);
-    recalc(updatedRows);
+    // Remove any non-numeric characters except decimal point
+    const cleanValue = value.replace(/[^0-9.]/g, '');
+    
+    // Ensure only one decimal point
+    const parts = cleanValue.split('.');
+    if (parts.length > 2) return; // Invalid input
+    
+    // Parse as number
+    const advance = parseFloat(cleanValue);
+    if (isNaN(advance)) return;
+    
+    const total = parseFloat(formData.amount) || 0;
+    
+    // Ensure advance doesn't exceed total
+    const validAdvance = Math.min(advance, total);
+    
+    // Calculate balance
+    const balance = Math.max(0, total - validAdvance);
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      advance_received: validAdvance.toString(),
+      balance_due: balance.toFixed(2)
+    }));
   };
 
+  // Handle quantity change
+  const handleQuantityChange = (value: string) => {
+    if (value === "") {
+      setQuantity("");
+      return;
+    }
+    
+    const qty = parseInt(value);
+    if (!isNaN(qty) && qty > 0) {
+      setQuantity(qty);
+    }
+  };
+
+  // Format advance on blur
+  const handleAdvanceBlur = () => {
+    if (formData.advance_received && !isNaN(parseFloat(formData.advance_received))) {
+      const formatted = parseFloat(formData.advance_received).toFixed(2);
+      setFormData(prev => ({
+        ...prev,
+        advance_received: formatted
+      }));
+    }
+  };
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
-      if (showCustomerDropdown) {
-        setShowCustomerDropdown(false);
-      }
-
-      const updatedRows = productRows.map(row => ({
-        ...row,
-        show: false
-      }));
-      setProductRows(updatedRows);
+      setShowCustomerDropdown(false);
+      setShowProductDropdown(false);
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [showCustomerDropdown, productRows]);
+  }, []);
 
   const handleDropdownClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
-  const handleProductInputClick = (e: React.MouseEvent, index: number) => {
-    e.stopPropagation();
-    const updatedRows = productRows.map((row, i) => ({
-      ...row,
-      show: i === index ? true : false
-    }));
-    setProductRows(updatedRows);
-  };
-
   return (
     <IonPage>
-            <IonHeader>
-          <Navigation title="Add Receipt" />
-        </IonHeader>
+      <IonHeader>
+        <Navigation title="Add Receipt" />
+      </IonHeader>
 
       <IonContent className="ion-padding">
         <div className="container-fluid fade-in-up">
@@ -363,7 +401,7 @@ const AddReceipt: React.FC = () => {
                   <div className="mb-4">
                     <label className="form-label fw-semibold mb-2">
                       <FontAwesomeIcon icon={faUser} className="me-2" />
-                      Customer
+                      Customer <span className="text-danger">*</span>
                     </label>
                     <div className="position-relative">
                       <div className="input-group">
@@ -371,7 +409,7 @@ const AddReceipt: React.FC = () => {
                           <FontAwesomeIcon icon={faSearch} />
                         </span>
                         <input
-                          className="form-label fw-semibold mb-2"
+                          className="form-control"
                           placeholder="Search customer by name..."
                           value={customerSearch}
                           onFocus={() => setShowCustomerDropdown(true)}
@@ -423,213 +461,124 @@ const AddReceipt: React.FC = () => {
                         </span>
                       </div>
                     )}
+                    {!selectedCustomerId && (
+                      <small className="text-danger">Please select a customer</small>
+                    )}
                   </div>
 
-                  {/* Products Section */}
+                  {/* Product Selection - SINGLE PRODUCT ONLY */}
                   <div className="mb-4">
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <label className="form-label fw-semibold mb-0">
                         <FontAwesomeIcon icon={faShoppingCart} className="me-2" />
-                        Products
+                        Product <span className="text-danger">*</span>
                       </label>
-                      <span className="badge bg-secondary bg-gradient">
-                        {productRows.length} item{productRows.length !== 1 ? 's' : ''}
-                      </span>
+                      {selectedProduct && (
+                        <span className="badge bg-primary bg-gradient">
+                          Price: ₹{selectedProduct.price}
+                        </span>
+                      )}
                     </div>
 
-                    {productRows.map((row, index) => (
-                      <div key={index} className="product-row elegant-card p-3 mb-3 position-relative">
-                        <div className="row g-3">
-                          {/* Product Search */}
-                          <div className="col-12 col-md-5 position-relative">
-                            <label className="form-label small fw-semibold text-uppercase text-muted">
-                              Product
-                            </label>
-                            <div className="input-group">
-                              <span className="input-group-text bg-light">
-                                <FontAwesomeIcon icon={faBox} />
-                              </span>
-                              <input
-                                className="form-control"
-                                placeholder="Search product..."
-                                value={row.product_name}
-                                onFocus={() => {
-                                  const updatedRows = productRows.map((r, i) => ({
-                                    ...r,
-                                    show: i === index ? true : false
-                                  }));
-                                  setProductRows(updatedRows);
-                                }}
-                                onChange={(e) => {
-                                  const updatedRows = productRows.map((r, i) => ({
-                                    ...r,
-                                    product_name: i === index ? e.target.value : r.product_name,
-                                    show: i === index ? true : false
-                                  }));
-                                  setProductRows(updatedRows);
-                                }}
-                                onClick={(e) => handleProductInputClick(e, index)}
-                              />
-                            </div>
-
-                            {row.show && (
-                              <div className="dropdown-menu show w-100 mt-1 shadow" onClick={handleDropdownClick}>
-                                {products
-                                  .filter((p) =>
-                                    p.name.toLowerCase().includes(row.product_name.toLowerCase())
-                                  )
-                                  .map((prod) => (
-                                    <button
-                                      key={prod.id}
-                                      type="button"
-                                      className="dropdown-item d-flex justify-content-between align-items-center py-2"
-                                      onClick={() => handleProductSelect(index, prod)}
-                                    >
-                                      <span>{prod.name}</span>
-                                      <small className="text-muted">₹{prod.price}</small>
-                                    </button>
-                                  ))}
-
-                                {products.filter(p => 
-                                  p.name.toLowerCase().includes(row.product_name.toLowerCase())
-                                ).length === 0 && (
-                                  <div className="dropdown-item text-muted py-2 text-center">
-                                    No products found
-                                  </div>
-                                )}
-
-                                <div className="dropdown-divider"></div>
-                                <button
-                                  type="button"
-                                  className="dropdown-item text-primary py-2"
-                                  onClick={goToAddProduct}
-                                >
-                                  <FontAwesomeIcon icon={faPlus} className="me-2" />
-                                  Add New Product
-                                </button>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Quantity */}
-                          <div className="col-12 col-md-2">
-                            <label className="form-label small fw-semibold text-uppercase text-muted">
-                              Quantity
-                            </label>
-                            <input
-                              type="number"
-                              className="form-control"
-                              placeholder="Qty"
-                              value={row.quantity ?? ""}
-                              onChange={(e) => {
-                                const value = e.target.value === "" ? null : Number(e.target.value);
-                                const updatedRows = productRows.map((r, i) => ({
-                                  ...r,
-                                  quantity: i === index ? value : r.quantity
-                                }));
-                                setProductRows(updatedRows);
-                                recalc(updatedRows);
-                              }}
-                              min="1"
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-
-                          {/* Prices */}
-                          <div className="col-12 col-md-4">
-                            <div className="row g-2">
-                              <div className="col-6">
-                                <label className="form-label small fw-semibold text-uppercase text-muted">
-                                  Original
-                                </label>
-                                <div className="form-control bg-light border-0">
-                                  {row.original_price ? `₹${row.original_price}` : '-'}
-                                </div>
-                              </div>
-                              <div className="col-6">
-                                <label className="form-label small fw-semibold text-uppercase text-muted">
-                                  Selling
-                                </label>
-                                <div className="input-group">
-                                  <input
-                                    type="number"
-                                    className="form-control"
-                                    placeholder="Price"
-                                    value={row.current_price ?? ""}
-                                    onChange={(e) => {
-                                      const value = e.target.value === "" ? null : Number(e.target.value);
-                                      updateProductRow(index, 'current_price', value);
-                                    }}
-                                    min="0"
-                                    step="0.01"
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                  {row.original_price && row.current_price !== row.original_price && (
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        resetPrice(index);
-                                      }}
-                                      className="btn btn-outline-warning"
-                                      title="Reset to original price"
-                                    >
-                                      <FontAwesomeIcon icon={faUndo} />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Delete */}
-                          <div className="col-12 col-md-1 d-flex align-items-end">
-                            <button
-                              type="button"
-                              className="btn btn-outline-danger w-100"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteProductRow(index);
-                              }}
-                              title="Remove product"
-                            >
-                              <FontAwesomeIcon icon={faTrash} />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Subtotal */}
-                        {row.current_price && row.quantity && (
-                          <div className="mt-3 pt-3 border-top">
-                            <div className="d-flex justify-content-between align-items-center">
-                              <div>
-                                <span className="text-muted me-2">Subtotal:</span>
-                                <span className="h5 fw-bold text-primary mb-0">
-                                  ₹{(row.current_price * row.quantity).toFixed(2)}
-                                </span>
-                              </div>
-                              {row.original_price && row.current_price !== row.original_price && (
-                                <span className="badge bg-warning text-dark">
-                                  Modified from ₹{row.original_price}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
+                    <div className="position-relative mb-3">
+                      <div className="input-group">
+                        <span className="input-group-text bg-light">
+                          <FontAwesomeIcon icon={faBox} />
+                        </span>
+                        <input
+                          className="form-control"
+                          placeholder="Search and select a product..."
+                          value={productSearch}
+                          onFocus={() => setShowProductDropdown(true)}
+                          onChange={(e) => {
+                            setProductSearch(e.target.value);
+                            setShowProductDropdown(true);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <button 
+                          className="btn btn-outline-secondary" 
+                          type="button"
+                          onClick={goToAddProduct}
+                        >
+                          <FontAwesomeIcon icon={faPlus} />
+                        </button>
                       </div>
-                    ))}
 
-                    <button 
-                      type="button"
-                      className="btn btn-outline-primary w-100 mt-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addProductRow();
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faPlus} className="me-2" />
-                      Add Another Product
-                    </button>
+                      {showProductDropdown && productSearch.trim() !== "" && (
+                        <div className="dropdown-menu show w-100 mt-1 shadow" onClick={handleDropdownClick}>
+                          {filteredProducts.length ? (
+                            filteredProducts.map((product) => (
+                              <button
+                                key={product.id}
+                                type="button"
+                                className="dropdown-item d-flex justify-content-between align-items-center py-2"
+                                onClick={() => {
+                                  setSelectedProduct(product);
+                                  setProductSearch(product.name);
+                                  setShowProductDropdown(false);
+                                }}
+                              >
+                                <span>{product.name}</span>
+                                <small className="text-muted">₹{product.price.toFixed(2)}</small>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="dropdown-item text-muted py-2 text-center">
+                              No products found
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedProduct && (
+                      <div className="alert alert-success d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong>{selectedProduct.name}</strong>
+                          <div className="text-muted small">Original Price: ₹{selectedProduct.price.toFixed(2)}</div>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-outline-danger btn-sm"
+                          onClick={() => {
+                            setSelectedProduct(null);
+                            setProductSearch("");
+                          }}
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Quantity Input */}
+                    <div className="mt-3">
+                      <label className="form-label fw-semibold">
+                        Quantity <span className="text-danger">*</span>
+                      </label>
+                      <div className="input-group">
+                        <span className="input-group-text bg-light">Qty</span>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={quantity}
+                          onChange={(e) => handleQuantityChange(e.target.value)}
+                          min="1"
+                          step="1"
+                          required
+                          disabled={!selectedProduct}
+                        />
+                        <span className="input-group-text bg-light">Units</span>
+                      </div>
+                      {selectedProduct && quantity && quantity > 0 && (
+                        <div className="mt-2 text-end">
+                          <small className="text-muted">
+                            Unit Price: ₹{selectedProduct.price.toFixed(2)} × {quantity} = 
+                            <span className="fw-bold text-primary"> ₹{(selectedProduct.price * quantity).toFixed(2)}</span>
+                          </small>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Totals Section */}
@@ -646,17 +595,16 @@ const AddReceipt: React.FC = () => {
                             <FontAwesomeIcon icon={faRupeeSign} />
                           </span>
                           <input
-                            type="number"
-                            className="form-control border-0 bg-white"
+                            type="text"
+                            className="form-control border-0 bg-white fw-bold"
                             value={formData.amount}
-                            onChange={(e) =>
-                              setFormData({ ...formData, amount: e.target.value })
-                            }
-                            required
                             readOnly
-                            onClick={(e) => e.stopPropagation()}
                           />
+                          <span className="input-group-text bg-white border-0 fw-bold">
+                            ₹
+                          </span>
                         </div>
+                        <small className="text-black-50">Price × Quantity</small>
                       </div>
 
                       <div className="col-12 col-md-4">
@@ -666,16 +614,23 @@ const AddReceipt: React.FC = () => {
                             <FontAwesomeIcon icon={faRupeeSign} />
                           </span>
                           <input
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             className="form-control border-0"
                             value={formData.advance_received}
-                            onChange={(e) =>
-                              setFormData({ ...formData, advance_received: e.target.value })
-                            }
-                            required
-                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => handleAdvanceChange(e.target.value)}
+                            onBlur={handleAdvanceBlur}
+                            placeholder="0"
+                            max={formData.amount}
+                            disabled={!selectedProduct || !quantity}
                           />
+                          <span className="input-group-text bg-white border-0 fw-bold">
+                            ₹
+                          </span>
                         </div>
+                        <small className="text-black-50">
+                          Max: ₹{formData.amount}
+                        </small>
                       </div>
 
                       <div className="col-12 col-md-4">
@@ -685,12 +640,39 @@ const AddReceipt: React.FC = () => {
                             <FontAwesomeIcon icon={faRupeeSign} />
                           </span>
                           <input
-                            type="number"
+                            type="text"
                             className="form-control border-0 fw-bold"
-                            value={(Number(formData.amount) - Number(formData.advance_received || 0)).toFixed(2)}
+                            value={formData.balance_due}
                             readOnly
-                            onClick={(e) => e.stopPropagation()}
                           />
+                          <span className="input-group-text bg-white border-0 fw-bold">
+                            ₹
+                          </span>
+                        </div>
+                        <small className="text-black-50">Total - Advance</small>
+                      </div>
+                    </div>
+                    
+                    {/* Summary */}
+                    <div className="mt-4 pt-3 border-top border-white border-opacity-25">
+                      <div className="row">
+                        <div className="col-6">
+                          <div className="text-center">
+                            <div className="small text-black-50">Product Selected</div>
+                            <div className="h4 fw-bold">
+                              {selectedProduct ? "✓" : "✗"}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-6">
+                          <div className="text-center">
+                            <div className="small text-black-50">Advance %</div>
+                            <div className="h4 fw-bold">
+                              {parseFloat(formData.amount) > 0 
+                                ? ((parseFloat(formData.advance_received || "0") / parseFloat(formData.amount)) * 100).toFixed(1) + '%'
+                                : '0%'}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -709,7 +691,6 @@ const AddReceipt: React.FC = () => {
                           onChange={() =>
                             setFormData({ ...formData, status: "Open" })
                           }
-                          onClick={(e) => e.stopPropagation()}
                         />
                         <label className="form-check-label" htmlFor="statusOpen">
                           <span className="d-flex align-items-center">
@@ -727,7 +708,6 @@ const AddReceipt: React.FC = () => {
                           onChange={() =>
                             setFormData({ ...formData, status: "Closed" })
                           }
-                          onClick={(e) => e.stopPropagation()}
                         />
                         <label className="form-check-label" htmlFor="statusClosed">
                           <span className="d-flex align-items-center">
@@ -745,9 +725,19 @@ const AddReceipt: React.FC = () => {
                       <button 
                         type="submit" 
                         className="btn btn-elegant btn-elegant-primary w-100 py-3"
+                        disabled={isSubmitting || !selectedCustomerId || !selectedProduct || !quantity}
                       >
-                        <FontAwesomeIcon icon={faCheckCircle} className="me-2" />
-                        Create Receipt
+                        {isSubmitting ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                            Creating...
+                          </>
+                        ) : (
+                          <>
+                            <FontAwesomeIcon icon={faCheckCircle} className="me-2" />
+                            Create Receipt
+                          </>
+                        )}
                       </button>
                     </div>
                     <div className="col-12 col-md-6">
@@ -755,6 +745,7 @@ const AddReceipt: React.FC = () => {
                         type="button"
                         className="btn btn-elegant btn-elegant-secondary w-100 py-3"
                         onClick={() => router.push('/receipts')}
+                        disabled={isSubmitting}
                       >
                         <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
                         Cancel
@@ -770,9 +761,10 @@ const AddReceipt: React.FC = () => {
         <IonToast
           isOpen={showToast}
           message={toastMessage}
-          duration={3000}
+          duration={5000}
           onDidDismiss={() => setShowToast(false)}
           position="top"
+          color={toastMessage.includes("❌") ? "danger" : "success"}
         />
       </IonContent>
     </IonPage>

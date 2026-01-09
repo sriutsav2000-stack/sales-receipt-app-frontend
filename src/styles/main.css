@@ -848,3 +848,122 @@ body {
     font-size: 14px;
   }
 }
+/* src/styles/main.css - Add these styles */
+
+/* Customer Card Styles */
+.customer-card {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.1);
+    padding: 20px !important;
+}
+
+.customer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  border-color: var(--primary-color);
+}
+
+.customer-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.customer-info {
+  min-height: 60px;
+}
+
+/* Search bar customization */
+.custom-searchbar {
+  --background: #f8f9fa;
+  --border-radius: 12px;
+  --box-shadow: none;
+  --placeholder-color: #6c757d;
+  --placeholder-opacity: 1;
+  --padding-start: 44px !important; /* This fixes icon overlap */
+  --padding-end: 16px;
+}
+
+.custom-searchbar .searchbar-input-container {
+  height: 48px;
+}
+
+.custom-searchbar .searchbar-input {
+  padding-left: 44px !important; /* Match the --padding-start */
+  padding-right: 16px !important;
+  font-size: 0.95rem;
+}
+
+.custom-searchbar .searchbar-search-icon {
+  left: 16px !important; /* Position icon properly */
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: #6c757d;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .customer-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .customer-card h5 {
+    font-size: 1rem;
+  }
+}
+
+/* Loading spinner */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Elegant card */
+.elegant-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+/* Button styles */
+.btn-elegant {
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 10px 24px;
+  transition: all 0.3s ease;
+}
+
+.btn-elegant-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-color-dark));
+  color: white;
+  border: none;
+}
+
+.btn-elegant-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(56, 128, 255, 0.3);
+}
+
+/* FAB customization */
+ion-fab-button {
+  --background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  --background-activated: var(--primary-color-dark);
+  --box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}

@@ -1,0 +1,538 @@
+/* src/styling/login.css */
+:root {
+  --primary-blue: #3880ff;
+  --primary-blue-dark: #3171e0;
+  --primary-blue-light: #4c8dff;
+  --primary-blue-bg: rgba(56, 128, 255, 0.1);
+  --secondary-color: #3dc2ff;
+  --success-color: #2dd36f;
+  --warning-color: #ffc409;
+  --danger-color: #eb445a;
+  --light-color: #f4f5f8;
+  --dark-color: #222428;
+  --medium-color: #92949c;
+  --border-color: #e0e0e0;
+  --border-focus: #3880ff;
+  --input-bg: #f8f9fa;
+  --card-bg: white;
+  --shadow-light: rgba(0, 0, 0, 0.08);
+  --shadow-medium: rgba(0, 0, 0, 0.12);
+  --shadow-blue: rgba(56, 128, 255, 0.15);
+}
+
+/* MAIN FIX: Ensure scrolling works */
+.auth-content {
+  --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  --padding-top: 20px;
+  --padding-bottom: 20px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Force IonContent to be scrollable */
+.auth-content .inner-scroll {
+  overflow-y: auto !important;
+  max-height: 100% !important;
+}
+
+/* Remove any scrollY restrictions */
+.auth-content[scrollY="false"] {
+  --overflow: auto !important;
+}
+
+.auth-toolbar {
+  --background: transparent !important;
+  --border-width: 0 !important;
+  --min-height: 64px;
+}
+
+/* FIX: Blue titles for Login/Register */
+.auth-title {
+  color: var(--primary-blue) !important; /* BLUE COLOR */
+  font-weight: 700;
+  font-size: 1.5rem;
+  text-align: center;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.back-button {
+  --color: var(--primary-blue) !important; /* BLUE COLOR */
+  --background: rgba(56, 128, 255, 0.15);
+  --border-radius: 12px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  height: 40px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.back-button:hover {
+  --background: rgba(56, 128, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.back-button:active {
+  transform: translateY(0);
+}
+
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 40px 0;
+  overflow-y: auto;
+}
+
+/* Ensure container allows scrolling */
+.auth-container {
+  min-height: auto;
+  padding: 20px 0 40px 0;
+}
+
+.mode-selector {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 40px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* FIX: Blue segment buttons */
+.auth-segment {
+  --background: rgba(56, 128, 255, 0.12) !important; /* BLUE TINT */
+  --border-radius: 16px;
+  padding: 6px;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(56, 128, 255, 0.2); /* BLUE BORDER */
+}
+
+.segment-button {
+  --background-checked: var(--primary-blue) !important; /* BLUE WHEN SELECTED */
+  --color: rgba(56, 128, 255, 0.9) !important; /* BLUE TINT */
+  --color-checked: white !important; /* WHITE TEXT WHEN SELECTED */
+  --border-radius: 12px;
+  --indicator-color: transparent;
+  min-height: 52px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin: 0 2px;
+}
+
+.segment-button::part(native) {
+  padding: 0 24px;
+}
+
+.segment-label {
+  font-size: 1rem;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+}
+
+/* FIX: Blue checked state */
+.segment-button.ion-segment-button-checked {
+  box-shadow: 0 4px 12px rgba(56, 128, 255, 0.25); /* BLUE SHADOW */
+}
+
+.form-container {
+  width: 100%;
+  max-width: 440px;
+  background: var(--card-bg);
+  border-radius: 24px;
+  padding: 40px 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 40px; /* Space for scrolling */
+}
+
+.form-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--primary-blue), var(--secondary-color));
+}
+
+/* FIX: Blue gradient titles */
+.form-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.form-title {
+  color: var(--primary-blue) !important; /* SOLID BLUE */
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+  line-height: 1.2;
+  text-shadow: none;
+  background: none !important; /* Remove gradient */
+  -webkit-text-fill-color: var(--primary-blue) !important; /* Force blue */
+}
+
+.form-subtitle {
+  color: var(--medium-color);
+  font-size: 1rem;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* FIX: Blue OTP title */
+.otp-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.otp-title {
+  color: var(--primary-blue) !important; /* SOLID BLUE */
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+  text-shadow: none;
+  background: none !important; /* Remove gradient */
+  -webkit-text-fill-color: var(--primary-blue) !important; /* Force blue */
+}
+
+.otp-subtitle {
+  color: var(--medium-color);
+  font-size: 1rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.form-group {
+  margin-bottom: 32px;
+}
+
+.input-container {
+  position: relative;
+}
+
+.input-label {
+  display: block;
+  color: var(--dark-color);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  margin-bottom: 10px;
+  letter-spacing: 0.3px;
+  padding-left: 4px;
+}
+
+.input-wrapper {
+  position: relative;
+  background: var(--input-bg);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.input-wrapper:focus-within {
+  background: white;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 4px var(--primary-blue-bg);
+  transform: translateY(-2px);
+}
+
+.form-input {
+  --padding-top: 20px;
+  --padding-bottom: 20px;
+  --padding-start: 20px;
+  --padding-end: 20px;
+  font-size: 1.0625rem;
+  color: var(--dark-color);
+  font-weight: 500;
+  --placeholder-color: #a0a0a0;
+  --placeholder-opacity: 1;
+  background: transparent;
+  width: 100%;
+  border: none;
+  outline: none;
+}
+
+.form-input::part(native) {
+  padding: 20px;
+}
+
+.otp-input {
+  letter-spacing: 8px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+}
+
+.input-border {
+  position: absolute;
+  bottom: 0;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-blue), transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.input-wrapper:focus-within .input-border {
+  transform: scaleX(1);
+}
+
+.error-message {
+  color: var(--danger-color);
+  font-size: 0.8125rem;
+  margin-top: 8px;
+  margin-left: 4px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: shake 0.5s ease;
+}
+
+.error-message::before {
+  content: "⚠️";
+  font-size: 0.875rem;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 36px 0;
+  position: relative;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+}
+
+.divider-text {
+  color: var(--medium-color);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: var(--card-bg);
+  position: relative;
+  z-index: 1;
+}
+
+.action-buttons {
+  margin-top: 48px;
+}
+
+/* FIX: Blue submit button */
+.submit-button {
+  --background: var(--primary-blue) !important; /* SOLID BLUE */
+  --background-hover: var(--primary-blue-dark) !important;
+  --background-activated: var(--primary-blue-dark) !important;
+  --background-focused: var(--primary-blue-dark) !important;
+  --border-radius: 16px;
+  --padding-top: 22px;
+  --padding-bottom: 22px;
+  font-weight: 700;
+  font-size: 1.0625rem;
+  letter-spacing: 0.5px;
+  margin: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 24px var(--shadow-blue);
+  position: relative;
+  overflow: hidden;
+}
+
+.submit-button::part(native) {
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+.submit-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px var(--shadow-blue);
+}
+
+.submit-button:active {
+  transform: translateY(-1px);
+}
+
+.switch-mode {
+  text-align: center;
+  margin-top: 28px;
+}
+
+.switch-text {
+  color: var(--medium-color);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+/* FIX: Blue switch link */
+.switch-link {
+  color: var(--primary-blue) !important;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-size: 0.9375rem;
+  position: relative;
+}
+
+.switch-link:hover {
+  color: var(--primary-blue-dark) !important;
+}
+
+.switch-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--primary-blue);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+
+.switch-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.otp-note {
+  margin-top: 32px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fff8e1, #fff3cd);
+  border-radius: 16px;
+  border-left: 5px solid var(--warning-color);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  animation: slideIn 0.5s ease-out;
+}
+
+.note-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.note-text {
+  color: #856404;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.note-text strong {
+  font-weight: 700;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+/* SCROLLING FIXES FOR MOBILE */
+@media (max-height: 700px) {
+  .auth-container {
+    padding: 10px 0 30px 0;
+  }
+  
+  .form-container {
+    padding: 30px 20px;
+    margin-bottom: 20px;
+  }
+  
+  .form-group {
+    margin-bottom: 24px;
+  }
+}
+
+/* Force scroll on small screens */
+@media (max-height: 600px) {
+  .auth-content {
+    --padding-top: 10px;
+    --padding-bottom: 10px;
+  }
+  
+  .auth-container {
+    padding: 5px 0 20px 0;
+  }
+}
+
+/* Ensure content is never cut off */
+.auth-content .scroll-content {
+  min-height: 100% !important;
+  padding-bottom: 20px !important;
+}
+
+/* Dark mode fixes */
+@media (prefers-color-scheme: dark) {
+  .auth-title {
+    color: var(--primary-blue-light) !important;
+  }
+  
+  .back-button {
+    --color: var(--primary-blue-light) !important;
+  }
+  
+  .segment-button {
+    --color: rgba(56, 128, 255, 0.8) !important;
+  }
+  
+  .form-title, .otp-title {
+    color: var(--primary-blue-light) !important;
+  }
+  
+  .switch-link {
+    color: var(--primary-blue-light) !important;
+  }
+}
