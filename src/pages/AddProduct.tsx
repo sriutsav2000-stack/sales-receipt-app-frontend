@@ -129,7 +129,7 @@ const AddProduct: React.FC = () => {
                       </IonButton>
                     </div>
                     <div className="col-12 col-md-6">
-                      <IonButton 
+                      {/* <IonButton 
                         className="btn-elegant btn-elegant-secondary w-100 py-3"
                         routerLink="/add-receipt"
                         routerDirection="back"
@@ -137,7 +137,7 @@ const AddProduct: React.FC = () => {
                       >
                         <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
                         Back to Receipt
-                      </IonButton>
+                      </IonButton> */}
                     </div>
                   </div>
                 </form>

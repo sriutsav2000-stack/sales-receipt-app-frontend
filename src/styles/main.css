@@ -749,6 +749,7 @@ body {
   --min-height: 42px !important;
   padding: 0 2px !important;
   border-bottom: 1px solid var(--border-color);
+ margin-top: 40px;
 }
 
 /* ===================== BUTTON GROUP ===================== */
