@@ -106,7 +106,7 @@
 
 /* FIX: Blue segment buttons */
 .auth-segment {
-  --background: rgba(56, 128, 255, 0.12) !important; /* BLUE TINT */
+  --background: rgba(175, 186, 206, 0.12) !important; /* BLUE TINT */
   --border-radius: 16px;
   padding: 6px;
   backdrop-filter: blur(12px);
@@ -115,7 +115,7 @@
 
 .segment-button {
   --background-checked: var(--primary-blue) !important; /* BLUE WHEN SELECTED */
-  --color: rgba(56, 128, 255, 0.9) !important; /* BLUE TINT */
+  --color: rgba(175, 16, 83, 0.9) !important; /* BLUE TINT */
   --color-checked: white !important; /* WHITE TEXT WHEN SELECTED */
   --border-radius: 12px;
   --indicator-color: transparent;
@@ -137,7 +137,7 @@
 
 /* FIX: Blue checked state */
 .segment-button.ion-segment-button-checked {
-  box-shadow: 0 4px 12px rgba(56, 128, 255, 0.25); /* BLUE SHADOW */
+  box-shadow: 0 4px 12px rgba(74, 100, 2, 0.25); /* BLUE SHADOW */
 }
 
 .form-container {

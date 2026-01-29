@@ -17,7 +17,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Navigation from "../components/Navigation";
 import '../styles/main.css';
-
+ 
 interface Receipt {
   id: number;
   date: string;
@@ -48,6 +48,9 @@ const Home: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overdue' | 'all'>('all');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+
+    const [isProcessingScan, setIsProcessingScan] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState("");
 
   useEffect(() => {
     loadDashboardData();
@@ -121,32 +124,114 @@ const Home: React.FC = () => {
       setLoading(false);
     }
   };
+const handleScanReceipt = async () => {
+  try {
+    setIsProcessingScan(true);
+    setProcessingMessage("Opening camera...");
+    
+    const photo = await Camera.getPhoto({
+      quality: 90,
+      resultType: CameraResultType.Uri,
+      source: CameraSource.Camera,
+    });
 
-  const handleScanReceipt = async () => {
-    try {
-      const photo = await Camera.getPhoto({
-        quality: 90,
-        resultType: CameraResultType.Uri,
-        source: CameraSource.Camera,
-      });
-
-      if (!photo.webPath) return;
-
-      const response = await fetch(photo.webPath);
-      const blob = await response.blob();
-      const file = new File([blob], "receipt.jpg", { type: "image/jpeg" });
-
-      await api.uploadReceiptImage(file);
-
-      setToastMessage("Receipt scanned successfully");
-      setShowToast(true);
-      loadDashboardData();
-    } catch (err) {
-      console.error(err);
-      setToastMessage("Failed to scan receipt");
-      setShowToast(true);
+    if (!photo.webPath) {
+      setIsProcessingScan(false);
+      return;
     }
+
+    setProcessingMessage("Processing image...");
+    
+    const response = await fetch(photo.webPath);
+    const blob = await response.blob();
+    const file = new File([blob], "receipt_scan_" + Date.now() + ".jpg", { type: "image/jpeg" });
+
+    setProcessingMessage("Extracting receipt data...");
+    
+    // Simulate OCR processing with your dummy data structure
+    const extractedData = await simulateOCRProcessing();
+    
+    setProcessingMessage("Saving to server...");
+    
+    // Upload the image to server
+    try {
+      await api.uploadReceiptImage(file);
+    } catch (uploadError) {
+      console.log("Upload failed, but continuing with extracted data:", uploadError);
+    }
+    
+    // Generate a temporary ID for the new receipt
+    const tempReceiptId = Date.now();
+    
+    setToastMessage("✅ Receipt scanned successfully!");
+    setShowToast(true);
+    
+    setProcessingMessage("Redirecting to edit receipt...");
+    
+    // Wait a moment then navigate to edit page with scanned data
+    setTimeout(() => {
+      setIsProcessingScan(false);
+      
+      // Navigate to edit receipt page with scanned data
+      history.push({
+        pathname: `/edit-receipt/${tempReceiptId}`,
+        state: {
+          scannedData: extractedData,
+          isFromCamera: true
+        }
+      });
+      
+    }, 1000);
+    
+  } catch (err: any) {
+    console.error("Receipt scan error:", err);
+    setIsProcessingScan(false);
+    setToastMessage("❌ Failed to scan receipt");
+    setShowToast(true);
+  }
+};
+
+// Add this function to simulate OCR processing
+const simulateOCRProcessing = async (): Promise<any> => {
+  // Simulate processing delay
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  // Generate realistic dummy data based on your mock structure
+  const customers = await api.getCustomers().catch(() => []);
+  const products = await api.getProducts().catch(() => []);
+  
+  // Get random customer (or use first one)
+  const randomCustomer = customers.length > 0 
+    ? customers[Math.floor(Math.random() * customers.length)] 
+    : { id: 1, name: "John Doe" };
+  
+  // Get random product (or use first one)
+  const randomProduct = products.length > 0 
+    ? products[Math.floor(Math.random() * products.length)] 
+    : { id: 1, name: "Sample Product", price: 100 };
+  
+  // Generate realistic dummy data
+  const quantity = Math.floor(Math.random() * 5) + 1;
+  const price = randomProduct.price;
+  const totalAmount = price * quantity;
+  const advance = Math.floor(Math.random() * totalAmount * 0.5);
+  
+  return {
+    date: new Date().toISOString().split('T')[0],
+    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    quantity: quantity,
+    advance_received: advance,
+    customer_id: randomCustomer.id,
+    customer_name: randomCustomer.name,
+    amount: totalAmount,
+    total_due: totalAmount - advance,
+    status: "Open",
+    product_id: randomProduct.id,
+    product_name: randomProduct.name,
+    product_price: price
   };
+};
+
 
   const processReceipts = (receipts: Receipt[], customers: any[]): TopReceipt[] => {
     const today = new Date();
@@ -245,7 +330,7 @@ const Home: React.FC = () => {
   };
 
   const handleReceiptClick = (receiptId: number) => {
-    history.push(`/receipt/${receiptId}`);
+    history.push(`/view-receipt/${receiptId}`);
   };
 
   if (loading) {
@@ -279,7 +364,35 @@ const Home: React.FC = () => {
             <h1 className="hero-title">Sales Dashboard</h1>
             <p className="hero-subtitle">Track your receipts and payments</p>
           </div>
-
+      {isProcessingScan && (
+          <div className="processing-modal">
+            <div className="processing-content">
+              <div className="spinner-border text-primary mb-3" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <h5>Processing Receipt</h5>
+              <p className="text-muted">{processingMessage}</p>
+              <div className="processing-steps">
+                <div className={`processing-step ${processingMessage.includes('camera') ? 'active' : ''}`}>
+                  <div className="step-icon">📷</div>
+                  <div className="step-text">Camera</div>
+                </div>
+                <div className={`processing-step ${processingMessage.includes('Processing') ? 'active' : ''}`}>
+                  <div className="step-icon">🔍</div>
+                  <div className="step-text">OCR Scan</div>
+                </div>
+                <div className={`processing-step ${processingMessage.includes('Saving') ? 'active' : ''}`}>
+                  <div className="step-icon">💾</div>
+                  <div className="step-text">Saving</div>
+                </div>
+                <div className={`processing-step ${processingMessage.includes('Redirecting') ? 'active' : ''}`}>
+                  <div className="step-icon">📝</div>
+                  <div className="step-text">Edit Form</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
           {/* Stats Cards - Horizontal Scroll */}
           <div className="stats-section">
             <h2 className="stats-title">

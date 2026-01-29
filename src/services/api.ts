@@ -247,34 +247,80 @@ addReceipt: (data: any) => {
 },
 
   // Upload receipt image
-  uploadReceiptImage: async (file: File) => {
-    console.log("📸 Upload receipt image:", file.name);
-    const formData = new FormData();
-    formData.append("file", file);
-    
-    const token = getToken();
-    const headers: HeadersInit = {};
-    
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-    
-    const response = await fetch(`${BASE_URL}/receipts/upload-image`, {
-      method: "POST",
-      body: formData,
-      headers,
-    });
+// Add to the api object in api.ts:
+uploadReceiptImage: async (file: File) => {
+  console.log("📸 Upload receipt image:", file.name);
+  const formData = new FormData();
+  formData.append("file", file);
+  
+  const token = getToken();
+  const headers: HeadersInit = {};
+  
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  const response = await fetch(`${BASE_URL}/receipts/upload-image`, {
+    method: "POST",
+    body: formData,
+    headers,
+  });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Upload Error ${response.status}:`, errorText);
-      throw new Error(`Upload Error ${response.status}: ${errorText}`);
-    }
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`❌ Upload Error ${response.status}:`, errorText);
+    throw new Error(`Upload Error ${response.status}: ${errorText}`);
+  }
 
-    const result = await response.json();
-    console.log("✅ Upload success:", result);
-    return result;
-  },
+  const result = await response.json();
+  console.log("✅ Upload success:", result);
+  
+  // Return both the result and the file for further processing
+  return {
+    ...result,
+    file: file
+  };
+},
+
+// Add this function to extract dummy data from scanned receipt
+extractReceiptData: async (file: File): Promise<any> => {
+  console.log("🔍 Extracting data from receipt image...");
+  
+  // Simulate OCR processing - in real app, you would send to OCR API
+  // For now, return dummy data that matches your mock structure
+  
+  // Generate a random ID for the scanned receipt
+  const receiptId = Math.floor(Math.random() * 1000) + 100;
+  
+  // Dummy data based on your mock structure
+  const dummyData = {
+    id: receiptId,
+    date: new Date().toISOString().split('T')[0],
+    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    quantity: Math.floor(Math.random() * 5) + 1,
+    advance_received: Math.floor(Math.random() * 100) + 10,
+    customer_id: Math.floor(Math.random() * 3) + 1, // 1-3 based on your mock customers
+    amount: Math.floor(Math.random() * 500) + 50,
+    total_due: Math.floor(Math.random() * 400) + 20,
+    status: "Open",
+    product_id: 1, // Default product
+    customer_name: ["John Foe", "shivam", "test1"][Math.floor(Math.random() * 3)],
+    product_name: "Sample Product",
+    product_price: Math.floor(Math.random() * 100) + 10
+  };
+  
+  console.log("📄 Generated dummy data:", dummyData);
+  
+  // Simulate processing delay
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  return {
+    success: true,
+    data: dummyData,
+    message: "Receipt data extracted successfully",
+    is_new: true // Flag to indicate this is a new scanned receipt
+  };
+},
 
   // New: Check API connectivity
   checkApiHealth: () => get(""),

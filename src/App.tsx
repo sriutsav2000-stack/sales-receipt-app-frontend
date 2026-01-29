@@ -14,6 +14,8 @@ import Login from "./pages/Login";
 import './styles/main.css';
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Customers from "./pages/Customers";
+import ViewReceipt from "./pages/ViewReceipt";
+import EditReceipt from "./pages/EditReceipt";
 
 setupIonicReact();
 
@@ -47,18 +49,20 @@ const AppRoutes: React.FC = () => {
   return (
     <IonApp>
       <IonReactRouter>
-        <IonRouterOutlet>
-          <Route exact path="/" component={Login} />
-          <PrivateRoute exact path="/home" component={Home} />
-          <PrivateRoute exact path="/receipts" component={Receipts} />
-          <PrivateRoute exact path="/add-receipt" component={AddReceipt} />
-          <PrivateRoute exact path="/add-customer" component={AddCustomer} />
-          <PrivateRoute exact path="/add-product" component={AddProduct} />
-          <PrivateRoute exact path="/upload-receipt" component={UploadReceipt} />
-          <PrivateRoute exact path="/customer/:id" component={CustomerDetail} />
-          <PrivateRoute exact path="/receipt/:id" component={ReceiptDetail} />
-           <PrivateRoute exact path="/customers" component={Customers} /> 
-        </IonRouterOutlet>
+       <IonRouterOutlet>
+  <Route exact path="/" component={Login} />
+  <PrivateRoute exact path="/home" component={Home} />
+  <PrivateRoute exact path="/receipts" component={Receipts} />
+  <PrivateRoute exact path="/add-receipt" component={AddReceipt} />
+  <PrivateRoute exact path="/view-receipt/:id" component={ViewReceipt} />
+<PrivateRoute exact path="/edit-receipt/:id" component={EditReceipt} />
+  <PrivateRoute exact path="/add-customer" component={AddCustomer} />
+  <PrivateRoute exact path="/add-product" component={AddProduct} />
+  <PrivateRoute exact path="/upload-receipt" component={UploadReceipt} />
+  <PrivateRoute exact path="/customer/:id" component={CustomerDetail} />
+  <PrivateRoute exact path="/receipt/:id" component={ReceiptDetail} />
+  <PrivateRoute exact path="/customers" component={Customers} />
+</IonRouterOutlet>
       </IonReactRouter>
     </IonApp>
   );
